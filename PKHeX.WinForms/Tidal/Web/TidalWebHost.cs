@@ -72,6 +72,7 @@ public sealed class TidalWebHost : Form
 
         // Same engine setup and initial file loading as the classic window (Main ctor + Program.Main).
         Api.InitializeGlobals();
+        Api.AttachPlugins();
         Api.LoadInitialFiles(startup);
     }
 

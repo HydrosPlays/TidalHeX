@@ -81,7 +81,7 @@ internal static class Program
 
         if (settings.Startup is { TidalTheme: true, TidalUI: true })
         {
-            // TidalHeX web interface replaces the classic main window (plugins are not loaded in this mode).
+            // TidalHeX web interface replaces the classic main window (it loads plugins itself).
             var host = new Tidal.Web.TidalWebHost(startup, init);
             host.Ready += (_, _) => splash?.BeginInvoke(splash.ForceClose);
             Application.Run(host);

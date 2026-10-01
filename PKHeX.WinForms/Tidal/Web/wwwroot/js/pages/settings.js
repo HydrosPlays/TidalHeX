@@ -29,7 +29,7 @@ window.TidalPages.settings = {
         </section>
         <section class="screen" style="padding:22px">
           <h4 class="card-title">Classic mode</h4>
-          <p class="muted" style="margin-top:0">Restart in the classic PKHeX window, e.g. to use plugins such as Auto-Legality Mod. To come back, click <b>TidalHeX view</b> in its menu bar.</p>
+          <p class="muted" style="margin-top:0">Restart in the classic PKHeX window. Plugins also work here (Save Tools → Plugins); use classic mode for anything a plugin only offers in PKHeX's own window. To come back, click <b>TidalHeX view</b> in its menu bar.</p>
           <button class="btn" @click="store.classic()"><t-icon name="classic"></t-icon>Switch to classic PKHeX</button>
         </section>
         <section class="screen" style="padding:22px">

@@ -119,11 +119,24 @@ public sealed class BoxMenuStrip : ContextMenuStrip
 /// <summary>
 /// Implementation of a WinForms box manipulator (using MessageBox prompts)
 /// </summary>
-public sealed class BoxManipulatorWF(SAVEditor editor) : BoxManipulator
+/// <remarks>TidalHeX: accepts any save view, since plugins create one with the save view they were given.</remarks>
+public sealed class BoxManipulatorWF(ISaveFileProvider editor) : BoxManipulator
 {
     protected override SaveFile SAV => editor.SAV;
 
-    protected override void FinishBoxManipulation(string message, bool all, int count) => editor.FinishBoxManipulation(message, all, count);
+    protected override void FinishBoxManipulation(string message, bool all, int count)
+    {
+        if (editor is SAVEditor sav)
+        {
+            sav.FinishBoxManipulation(message, all, count);
+            return;
+        }
+        editor.ReloadSlots();
+        if (!string.IsNullOrWhiteSpace(message))
+            WinFormsUtil.Alert(message + $" ({count})");
+        else
+            WinFormsUtil.Asterisk();
+    }
 
     protected override bool CanManipulateRegion(int start, int end, string prompt, string fail)
     {

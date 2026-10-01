@@ -132,7 +132,8 @@ internal sealed partial class WebApi
     {
         if (string.IsNullOrWhiteSpace(path))
             return;
-        // Plugins are not loaded in the web UI.
+        if (TryPluginLoadFile(path))
+            return; // handled by a plugin
 
         // detect if it is a folder (load into boxes or not)
         if (Directory.Exists(path))
@@ -389,6 +390,7 @@ internal sealed partial class WebApi
         if (Settings.Sounds.PlaySoundSAVLoad)
             SystemSounds.Asterisk.Play();
 
+        NotifyPluginsSaveLoaded();
         EmitSaveLoaded(); // the editor was reset to the template; the page fetches it with editor.get
         return true;
     }

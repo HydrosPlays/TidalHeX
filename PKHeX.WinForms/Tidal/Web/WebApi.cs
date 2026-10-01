@@ -49,6 +49,7 @@ internal sealed partial class WebApi
         RegisterTrainerTool();
         RegisterBoxLayoutTool();
         RegisterPokedexTool();
+        RegisterPlugins();
         RegisterEditor();
     }
 
@@ -101,6 +102,7 @@ internal sealed partial class WebApi
         LocalizeUtil.InitializeStrings(lang, SAV, HaX);
         LocalizedDescriptionAttribute.Localizer = WinFormsTranslator.GetDictionary(lang);
         SizeCP.ResetSizeLocalizations(lang);
+        NotifyPluginsLanguageChanged(lang);
     }
 
     #endregion

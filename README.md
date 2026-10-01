@@ -18,7 +18,7 @@
 
 TidalHeX is a fork of PKHeX that replaces the classic Windows Forms window with a new animated interface, styled after a game console's home menu and the Rotom Dex. Underneath, it is still PKHeX: saves are read and written by PKHeX's own engine (`PKHeX.Core`, unchanged), with the same legality checker and the same encounter and Mystery Gift data. TidalHeX edits your saves exactly the way PKHeX does.
 
-The classic PKHeX window is still one click away, for plugins such as Auto-Legality Mod or anything the new interface doesn't cover yet.
+PKHeX plugins work too: drop them in the `plugins` folder next to the exe and their commands appear under Save Tools. The classic PKHeX window is still one click away for anything the new interface doesn't cover yet.
 
 **We do not support or condone cheating at the expense of others. Do not use significantly hacked Pokémon in battle or in trades with those who are unaware hacked Pokémon are in use.**
 
@@ -61,10 +61,11 @@ The classic PKHeX window is still one click away, for plugins such as Auto-Legal
 
 - **Items**, **Trainer Info**, **Box Layout** and **Pokédex** are rebuilt inside the interface, with the same rules as PKHeX's editors. Nothing is written until you press Save, and leaving with unsaved changes asks first.
 - Every other save editor opens PKHeX's own window, restyled to match. Each rebuilt tool also has a **More options** button that opens the classic editor for game-specific details.
+- **Plugins**: PKHeX plugins in the `plugins` folder next to the exe load at startup, just like in PKHeX. Everything they add to PKHeX's Tools menu shows up in a **Plugins** section of Save Tools, with their submenus as groups, and commands that don't apply to the loaded game hidden. Plugin windows get the TidalHeX theme. Startup setting `PluginLoadEnable` turns plugins off.
 
 ### Classic mode
 
-- Settings → **Switch to classic PKHeX** restarts in the classic window, with plugins loaded. Click **TidalHeX view** in its menu bar to come back.
+- Settings → **Switch to classic PKHeX** restarts in the classic window. Click **TidalHeX view** in its menu bar to come back.
 - The classic window and all of its editors use the TidalHeX ocean theme, with smoother tab switching.
 - Two startup settings control this: `TidalUI` (new interface or classic window) and `TidalTheme` (the ocean theme for classic windows).
 

@@ -34,6 +34,7 @@ window.TidalIcons = (() => {
     info: p('<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.8h0"/>'),
     alert: p('<path d="M10.3 4.2 2.9 17.1A2 2 0 0 0 4.6 20h14.8a2 2 0 0 0 1.7-2.9L13.7 4.2a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4.5"/><path d="M12 17.2h0"/>'),
     help: p('<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h0"/>'),
+    plugin: p('<path d="M5 9V5.5A1.5 1.5 0 0 1 6.5 4H10a2 2 0 1 1 4 0h3.5A1.5 1.5 0 0 1 19 5.5V9a2 2 0 1 1 0 4v4.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 0-4 0H6.5A1.5 1.5 0 0 1 5 17.5V13a2 2 0 1 0 0-4Z"/>'),
     classic: p('<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9h17"/><path d="M7 6.8h0M9.5 6.8h0"/>'),
     wand: p('<path d="m4 20 11-11"/><path d="m13.5 7.5 3 3"/><path d="M17 3.5v3M15.5 5h3M20 8.5v2M19 9.5h2M9 3.5v2M8 4.5h2"/>'),
     refresh: p('<path d="M20 11a8 8 0 0 0-14.5-4.5L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4.5L20 16"/><path d="M20 20v-4h-4"/>'),

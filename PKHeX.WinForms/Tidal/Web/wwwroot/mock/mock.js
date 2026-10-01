@@ -164,6 +164,12 @@ window.TidalMock = (() => {
         recalc(); editor.v = editorVersion++;
         return delay(editor);
       }
+      case 'plugins.list': return delay({ plugins: ['Sorting Plugin', 'Team Viewer'], items: [
+        { id: 'p1', text: 'Sort Boxes By', tip: '', enabled: true, hasIcon: false, children: [
+          { id: 'p2', text: 'Pokédex Number', tip: '', enabled: true, hasIcon: false, children: [] },
+          { id: 'p3', text: 'Type', tip: '', enabled: true, hasIcon: false, children: [] }] },
+        { id: 'p4', text: 'View Battle Teams', tip: '', enabled: true, hasIcon: false, children: [] }] });
+      case 'plugins.run': return delay(true);
       case 'editor.legality': return delay({ valid: true, report: 'Legal!\n\nAll checks passed.' });
       case 'list.get': return delay(lists[args.name] ?? (args.name.endsWith('Locations') ? lists.locations : []));
       case 'enc.search': return delay(encounterPool());

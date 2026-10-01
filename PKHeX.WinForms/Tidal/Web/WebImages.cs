@@ -41,6 +41,7 @@ internal sealed class WebImages(WebApi api)
             ["sprite", "ball", var ball] => (uint)ToInt(ball) <= byte.MaxValue ? SpriteUtil.GetBallSprite((byte)ToInt(ball)) : null,
             ["sprite", "item", var item] => ToInt(item) is >= 0 and var id ? GetItemSprite(id) : null,
             ["sprite", "bag", var pouch] => GetPouchIcon(pouch),
+            ["sprite", "plugin", var id] => api.GetPluginIcon(id),
             _ => null,
         };
         if (image is null)

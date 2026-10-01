@@ -488,6 +488,13 @@ img.sprite { image-rendering: var(--sprite-render); }
 .tool .classic-mark { position: absolute; top: 8px; right: 10px; opacity: .45; }
 .tool .classic-mark svg { width: 14px; height: 14px; }
 .tool.web .ic { box-shadow: 0 0 0 2px rgba(126, 244, 255, .55); }
+.tool .ic img { width: 22px; height: 22px; object-fit: contain; }
+.tool.off { opacity: .45; cursor: default; }
+.tool.off:hover { transform: none; background: rgba(255, 255, 255, .1); box-shadow: none; }
+.plugin-tools .card-title .muted { font-weight: 600; letter-spacing: 0; }
+.plugin-group { display: flex; align-items: center; gap: 8px; margin: 14px 0 10px; font-size: 13px; font-weight: 700; color: #fff; }
+.plugin-group:first-of-type { margin-top: 4px; }
+.plugin-group .ti svg { width: 16px; height: 16px; opacity: .7; }
 
 /* ---------- In-page save tools (t-tool frame) ---------- */
 .tool-view { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 14px; height: 100%; min-height: 0; }

@@ -136,3 +136,9 @@ public sealed record DexEntryDto(int Species, string Name, bool Seen, bool Caugh
 /// <summary> One action: seenAll / caughtAll / completeAll / clearAll (Shiny = include shiny forms), or set (Species + State none|seen|caught). </summary>
 public sealed record DexOp(string Op, bool Shiny, int Species, string? State);
 public sealed record DexSaveArgs(IReadOnlyList<DexOp> Ops);
+
+/// <param name="Plugins">Names of the loaded plugins.</param>
+/// <param name="Items">The commands they added to the menu bar (submenus as groups).</param>
+public sealed record PluginMenuDto(List<string> Plugins, List<PluginItemDto> Items);
+
+public sealed record PluginItemDto(string Id, string Text, string Tip, bool Enabled, bool HasIcon, List<PluginItemDto> Children);
