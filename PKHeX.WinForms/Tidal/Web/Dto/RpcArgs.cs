@@ -27,6 +27,7 @@ public sealed record OptionArgs(string Name, bool Value);
 public sealed record DevBlankArgs(string Version);
 public sealed record DialogAnswerArgs(int Id, string Result);
 public sealed record DevDropArgs(SlotRef Slot, string Path);
+public sealed record DevPathArgs(string Path);
 /// <summary> Search result token; accepted as a string or a number. </summary>
 public sealed record TokenArgs(JsonElement Token)
 {

@@ -131,7 +131,7 @@ ToolInfo    { id, name, category, description }
 `editor.set` fields: `species`, `form`, `nickname`, `isNicknamed`, `level`, `exp`, `nature`, `statNature`, `ability`, `heldItem`, `gender`,
 `shiny` (`'none'|'random'|'star'|'square'`: new PID), `shinySID` (same values; keeps the PID and changes the SID, PKHeX's Alt+click), `isEgg`, `pid` (hex), `ec` (hex), `language`, `friendship`, `ball`, `teraType`,
 `met.version|location|level|date|eggLocation|eggDate|fateful`, `ot.name|gender|tid|sid`, `ht.name|gender|friendship`,
-`stats.{hp|atk|def|spa|spd|spe}.{iv|ev|ht}`, `moves.{0-3}.{id|pp|ppUps}`, `relearn.{0-3}`.
+`stats.{hp|atk|def|spa|spd|spe}.{iv|ev|ht|gv|av}`, `x.<key>` (format-specific fields listed in `EditorState.fields`), `moves.{0-3}.{id|pp|ppUps}`, `relearn.{0-3}`.
 
 ```ts
 EditorState {
@@ -151,4 +151,12 @@ Opt = { v, t }
 
 ```ts
 PluginItem { id, text, tip, enabled, hasIcon, children: PluginItem[] }   // icon: /sprite/plugin/{id}
+```
+
+```ts
+// EditorState.fields: what PKMEditor shows only for some formats (Pokérus, form argument, markings, size, contest stats,
+// battle version, ground tile, alpha/noble, dynamax, tera, hidden power type, region, HOME tracker, extra bytes...).
+FieldDto { key, section: 'overview'|'met'|'stats'|'moves'|'extras'|'trainer', group, label,
+           kind: 'bool'|'number'|'select'|'hex'|'info'|'datetime'|'flags'|'marks'|'bytes'|'move',
+           value, min, max, options?: Opt[], hint?, suggest }   // suggest: editor.suggest { what: 'field:<key>' }
 ```

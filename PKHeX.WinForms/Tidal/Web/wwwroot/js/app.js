@@ -239,6 +239,7 @@
     app.component('t-tri', C.TTri);
     app.component('t-number', C.TNumber);
     app.component('t-text', C.TText);
+    app.component('t-fields', C.TFields);
     app.component('t-modal', C.TModal);
     app.component('t-dialog', C.TDialog);
     app.component('t-tool', C.TTool);

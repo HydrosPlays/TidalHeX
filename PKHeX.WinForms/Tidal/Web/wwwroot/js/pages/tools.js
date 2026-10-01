@@ -91,7 +91,7 @@
     template: `
       <div class="page">
         <component v-if="active" ref="tool" :is="'tool-' + webTool(active)" :store="store" :tool="active" @close="closeTool"></component>
-        <div v-else class="tools">
+        <div v-else class="tools screen tools-panel">
           <div class="row"><input class="input" style="max-width:360px" v-model="query" placeholder="Find a tool…"><span class="muted grow" style="text-align:right">{{ tools.length }} tools for this save<template v-if="plugins.items.length"> · {{ plugins.plugins.length }} {{ plugins.plugins.length === 1 ? 'plugin' : 'plugins' }}</template></span></div>
           <div v-if="loading" class="empty-state"><div><t-icon name="tools"></t-icon><h3>Loading tools…</h3></div></div>
           <div v-else-if="!groups.length && !pluginGroups.length" class="empty-state screen" style="height:auto;padding:40px"><div><t-icon name="tools"></t-icon><h3>No tools found</h3></div></div>

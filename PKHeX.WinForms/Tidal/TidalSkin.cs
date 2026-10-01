@@ -93,6 +93,7 @@ internal static class TidalSkin
 
         if (img is null)
         {
+            area = FitTextArea(g, b, area, ref flags);
             TextRenderer.DrawText(g, text, b.Font, area, textColor, flags);
             return;
         }
@@ -114,6 +115,27 @@ internal static class TidalSkin
         g.DrawImage(img, imageRect);
         if (text.Length != 0)
             TextRenderer.DrawText(g, text, b.Font, remaining, textColor, flags);
+    }
+
+    /// <summary>
+    /// Keeps a button's text on one line like the stock button does: the padding shrinks when the text is tight, and it
+    /// only wraps when the button is tall enough for two lines (a one-line button would cut the second line off).
+    /// </summary>
+    private static Rectangle FitTextArea(Graphics g, ButtonBase b, Rectangle area, ref TextFormatFlags flags)
+    {
+        if ((flags & TextFormatFlags.WordBreak) == 0 || b.Text.Length == 0)
+            return area;
+        var measure = TextFormatFlags.SingleLine | TextFormatFlags.HidePrefix;
+        var size = TextRenderer.MeasureText(g, b.Text, b.Font, new Size(int.MaxValue, int.MaxValue), measure);
+        if (size.Width <= area.Width)
+            return area; // fits as is
+        var wide = Rectangle.Inflate(b.ClientRectangle, -2, 0) with { Y = area.Y, Height = area.Height };
+        if (size.Width <= wide.Width || area.Height < size.Height * 2)
+        {
+            flags = (flags & ~(TextFormatFlags.WordBreak | TextFormatFlags.EndEllipsis)) | TextFormatFlags.SingleLine | TextFormatFlags.NoClipping;
+            return wide;
+        }
+        return area; // tall button: wrap
     }
 
     /// <summary> Places the image per <see cref="ButtonBase.TextImageRelation"/>, returning the area left for text. </summary>

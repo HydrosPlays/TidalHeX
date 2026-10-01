@@ -40,6 +40,12 @@ internal sealed partial class WebApi
         });
         // Development only: list the save editors for blank saves too (PKHeX hides them because blanks can't be exported).
         Bridge.Register("dev.showAllTools", _ => DevShowAllTools = true);
+        // Development only: write the current save to a path (test data for screenshots and classic-mode checks).
+        Bridge.Register("dev.saveTo", c =>
+        {
+            File.WriteAllBytes(c.Get<DevPathArgs>().Path, SAV.Write().ToArray());
+            return true;
+        });
 #endif
     }
 

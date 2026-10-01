@@ -42,6 +42,7 @@ internal sealed class WebImages(WebApi api)
             ["sprite", "item", var item] => ToInt(item) is >= 0 and var id ? GetItemSprite(id) : null,
             ["sprite", "bag", var pouch] => GetPouchIcon(pouch),
             ["sprite", "plugin", var id] => api.GetPluginIcon(id),
+            ["sprite", "type", var type] => GetTypeIcon(ToInt(type)),
             _ => null,
         };
         if (image is null)
@@ -81,6 +82,15 @@ internal sealed class WebImages(WebApi api)
     }
 
     private static Bitmap GetBlankItem() => new(1, 1);
+
+    /// <summary> PKHeX's small type icon (the move pickers' icons in the classic editor). </summary>
+    private Image? GetTypeIcon(int type)
+    {
+        if ((uint)type > byte.MaxValue)
+            return null;
+        var icon = Drawing.Misc.TypeSpriteUtil.GetTypeSpriteIconSmall((byte)type, SAV.Generation);
+        return icon is null ? null : new Bitmap(icon); // copy: the route disposes what it returns
+    }
 
     /// <summary> Bag pouch icons (the classic editor's tab images). </summary>
     private static Image? GetPouchIcon(string pouch) => Enum.TryParse<InventoryType>(pouch, out var type) ? type switch

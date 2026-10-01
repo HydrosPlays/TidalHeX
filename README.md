@@ -36,6 +36,14 @@ PKHeX plugins work too: drop them in the `plugins` folder next to the exe and th
 | **Items** | |
 | ![Items](.github/screenshots/items.webp) | |
 
+### Classic mode
+
+The classic PKHeX window is still there, restyled with the TidalHeX ocean theme.
+
+| Classic window | Stats and party |
+|:---:|:---:|
+| ![Classic PKHeX window with the TidalHeX theme](.github/screenshots/classic-main.webp) | ![Classic window: stats and party](.github/screenshots/classic-stats.webp) |
+
 ## What TidalHeX changes
 
 ### A new interface

@@ -29,9 +29,28 @@ internal sealed partial class WebApi
         });
         Bridge.Register("editor.exportFile", _ => ExportEditorFile());
         Bridge.Register("editor.classic", c => OpenClassicEditor(c.Get<WhatArgs>().What));
+        Bridge.Register("editor.moveData", _ => GetMoveData());
     }
 
     internal EditorState GetEditorState() => EditorSvc.GetState($"/sprite/editor?v={Session.EditorStamp}");
+
+    /// <summary> Every move's type and category in the editor's game, for the move pickers (PKMEditor.ValidateMovePaint draws the type). </summary>
+    private MoveDataDto GetMoveData()
+    {
+        var pk = Session.Editor;
+        var context = pk.Context;
+        var count = Math.Min(GameInfo.Strings.movelist.Length, pk.MaxMoveID + 1);
+        var types = new int[count];
+        var categories = new char[count];
+        types[0] = -1;
+        categories[0] = ' ';
+        for (ushort move = 1; move < count; move++)
+        {
+            types[move] = MoveInfo.GetType(move, context);
+            categories[move] = MoveCategory.Get(move, context);
+        }
+        return new MoveDataDto(types, new string(categories));
+    }
 
     /// <summary> Main.MainMenuSave: exports the finalized editor Pokémon to a file. </summary>
     private bool ExportEditorFile()
@@ -73,15 +92,31 @@ internal sealed partial class WebApi
                 form.ShowDialog(Host);
                 break;
             }
+            // PKMEditor's move flag buttons (B_Records_Click, B_MoveShop_Click, B_PlusRecord_Click)
+            case "records" when pk is ITechRecord records:
+            {
+                using var form = new TechRecordEditor(records, pk);
+                form.ShowDialog(Host);
+                break;
+            }
+            case "moveshop" when pk is IMoveShop8Mastery shop:
+            {
+                using var form = new MoveShopEditor(shop, shop, pk);
+                form.ShowDialog(Host);
+                break;
+            }
+            case "plus" when pk is IPlusRecord plus && pk.PersonalInfo is IPermitPlus permit:
+            {
+                using var form = new PlusRecordEditor(plus, permit, pk);
+                form.ShowDialog(Host);
+                break;
+            }
             default:
                 Toast("info", "That editor isn't available for this Pokémon's format.");
                 return GetEditorState();
         }
         if (!pk.Data.SequenceEqual(before))
-        {
-            Session.EditorDirty = true;
-            Session.TouchEditor();
-        }
+            EditorSvc.ChangedExternally(); // also rechecks legality
         return GetEditorState();
     }
 }

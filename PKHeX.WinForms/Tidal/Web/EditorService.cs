@@ -11,7 +11,7 @@ namespace PKHeX.WinForms.Tidal.Web;
 /// Headless Pokémon editor for the web UI. Edits a live <see cref="PKM"/> exactly the way PKHeX's
 /// WinForms <c>PKMEditor</c> does (same side effects per format), and finalizes it like <c>PreparePKM</c>.
 /// </summary>
-internal sealed class EditorService
+internal sealed partial class EditorService
 {
     private readonly WebSession Session;
     private SaveFile Sav => Session.SAV;
@@ -47,6 +47,9 @@ internal sealed class EditorService
         Session.EditorDirty = true;
         Session.TouchEditor();
     }
+
+    /// <summary> A classic sub-editor changed the working copy directly. </summary>
+    public void ChangedExternally() => Changed();
 
     /// <summary>
     /// Returns a finalized clone (what PKHeX's PreparePKM produces): recalculated/healed stats, compacted moves,
@@ -201,11 +204,18 @@ internal sealed class EditorService
         var neutral = natureForStats.IsNeutralOrInvalid(up, down);
         var stats = new List<StatDto>(6);
         var hyper = pk as IHyperTrain;
+        var ganbaru = pk as IGanbaru; // Legends: Arceus effort levels
+        var awakened = pk as IAwakened; // Let's Go awakening values
         foreach (var (key, name, index, amp) in StatOrder)
         {
             int mod = neutral || amp < 0 ? 0 : amp == up ? 1 : amp == down ? -1 : 0;
             stats.Add(new StatDto(key, name, pi.GetBaseStatValue(index), pk.GetIV(index), pk.GetEV(index), values[index],
-                hyper?.IsHyperTrained(index) ?? false, mod));
+                hyper?.IsHyperTrained(index) ?? false, mod)
+            {
+                Gv = ganbaru?.GetGV(index),
+                GvMax = ganbaru is null ? null : pk.GetMaxGanbaru(index),
+                Av = awakened?.GetAV(index),
+            });
         }
 
         // Moves
@@ -216,8 +226,9 @@ internal sealed class EditorService
             var id = pk.GetMove(i);
             var type = id == 0 ? null : TypeName(MoveInfo.GetType(id, pk.Context));
             bool? legal = la is { Parsed: true } && !HaX && id != 0 ? la.Info.Moves[i].Valid : null;
-            moves.Add(new MoveDto(id, id < strings.movelist.Length ? strings.movelist[id] : $"#{id}", id == 0 ? 0 : GetPP(pk, i), id == 0 ? 0 : GetPPUps(pk, i), id == 0 ? 0 : pk.GetMovePP(id, GetPPUps(pk, i)), type, null, legal));
+            moves.Add(new MoveDto(id, id < strings.movelist.Length ? strings.movelist[id] : $"#{id}", id == 0 ? 0 : GetPP(pk, i), id == 0 ? 0 : GetPPUps(pk, i), id == 0 ? 0 : pk.GetMovePP(id, GetPPUps(pk, i)), type, MoveCategory.GetName(id, pk.Context), legal));
         }
+        var learnable = la is { Parsed: true } && !HaX ? GetLearnableMoves(la, pk.MaxMoveID) : null;
         var relearn = new[] { pk.RelearnMove1, pk.RelearnMove2, pk.RelearnMove3, pk.RelearnMove4 };
 
         // Met
@@ -302,6 +313,7 @@ internal sealed class EditorService
             HasStatNature = format >= 8,
             Ability = ability,
             Abilities = abilities,
+            AbilityNote = GetAbilityNote(pk),
             HeldItem = pk.HeldItem,
             HasHeldItem = format >= 2 && (HaX || sav is not (SAV7b or SAV8LA)),
             Gender = pk.Gender,
@@ -324,10 +336,14 @@ internal sealed class EditorService
             EvMax = pk.MaxEV,
             EvTotalMax = format >= 3 ? 510 : 0,
             HasHyperTraining = pk is IHyperTrain,
+            Fields = GetFields(pk, sav),
             TeraType = tera,
             HasTera = pk is ITeraType,
             HiddenPower = hiddenPower,
             Moves = moves,
+            Learnable = learnable,
+            MoveFlags = GetMoveFlagEditors(pk),
+            Editors = GetDetailEditors(pk),
             Relearn = relearn.Select(z => (int)z).ToArray(),
             HasRelearn = format >= 6,
             RibbonCount = ribbons,
@@ -378,7 +394,60 @@ internal sealed class EditorService
     }
 
     // Ability: "index" mode (list index = slot) for normal editing, "raw" (ability id) for PA9 / HaX.
-    private bool RawAbility(PKM pk) => HaX || pk is PA9;
+    private static bool RawAbility(PKM pk) => HaX;
+
+    /// <summary> Changing species or form refreshes the ability for that slot, except in Z-A, where the birth ability stays. </summary>
+    private static bool AbilityFollowsSpecies(PKM pk) => pk.Format >= 3 && !RawAbility(pk) && pk is not PA9;
+
+    /// <summary>
+    /// Ability slots to choose from. Z-A keeps the ability a Pokémon was born with when it evolves, so its slots come from
+    /// the species it was born as (AbilityVerifier.VerifyBirthAbility); a HOME-tracked one is realigned to its own species.
+    /// </summary>
+    private IPersonalAbility12 GetAbilitySlots(PKM pk)
+    {
+        var (species, form) = GetBirthSpecies(pk);
+        return pk is PA9 ? PersonalTable.ZA[species, form] : (IPersonalAbility12)pk.PersonalInfo;
+    }
+
+    /// <summary> Z-A: the species the Pokémon was born as. Other games (and HOME-tracked Z-A Pokémon): its current species. </summary>
+    private (ushort Species, byte Form) GetBirthSpecies(PKM pk)
+    {
+        if (pk is not PA9 || pk is IHomeTrack { HasTracker: true } || pk.Species == 0)
+            return (pk.Species, pk.Form);
+
+        // The encounter the legality check matched, if it found one.
+        if (Legality is { Parsed: true } la && la.EncounterMatch is { Species: not 0 } enc and not EncounterInvalid)
+            return (enc.Species, enc.Form);
+
+        // Otherwise the closest species in its line whose slot holds the stored ability (e.g. evolved in the editor
+        // below the evolution level, where no encounter matches).
+        var slot = pk.AbilityNumber is 1 or 2 or 4 ? pk.AbilityNumber >> 1 : 0;
+        if (PersonalTable.ZA[pk.Species, pk.Form].GetAbilityAtIndex(slot) == pk.Ability)
+            return (pk.Species, pk.Form);
+        var line = EvolutionTree.GetEvolutionTree(EntityContext.Gen9a).Reverse.GetPreEvolutions(pk.Species, pk.Form).Reverse();
+        foreach (var (s, f) in line)
+        {
+            if (PersonalTable.ZA[s, f].GetAbilityAtIndex(slot) == pk.Ability)
+                return (s, f);
+        }
+        return (pk.Species, pk.Form);
+    }
+
+    /// <summary> Legends: Arceus and Z-A have no abilities in battle; the stored one applies once the Pokémon moves on through HOME. </summary>
+    private string? GetAbilityNote(PKM pk)
+    {
+        if (pk is not (PA8 or PA9) || pk.Species == 0)
+            return null;
+        var game = pk is PA9 ? "Z-A" : "Legends: Arceus";
+        var note = $"Not used in {game} battles. It's the ability it will have in other games through Pokémon HOME.";
+        var (species, form) = GetBirthSpecies(pk);
+        if (pk is PA9 && !RawAbility(pk) && (species != pk.Species || form != pk.Form))
+        {
+            var name = species < GameInfo.Strings.specieslist.Length ? GameInfo.Strings.specieslist[species] : $"#{species}";
+            note += $" Z-A keeps the ability it was born with, so these are {name}'s.";
+        }
+        return note;
+    }
 
     private (List<Opt> Options, int Selected) GetAbilityState(PKM pk)
     {
@@ -387,10 +456,19 @@ internal sealed class EditorService
         if (RawAbility(pk))
             return ([.. GameInfo.FilteredSources.Abilities.Select(z => new Opt(z.Value, z.Text))], pk.Ability);
 
-        var list = GameInfo.FilteredSources.GetAbilityList(pk.PersonalInfo);
+        // PKMEditor.SetAbilityList: the species' slots as "Name (1)", "Name (2)", "Name (H)".
+        var slots = GetAbilitySlots(pk);
+        var list = GameInfo.FilteredSources.GetAbilityList((IPersonalAbility)slots);
         var options = list.Select((z, i) => new Opt(i, z.Text)).ToList();
-        return (options, Math.Clamp(GetAbilityIndex(pk, options.Count), 0, Math.Max(0, options.Count - 1)));
+        if (pk is { Context: EntityContext.Gen5, Species: (ushort)Species.Basculin, Form: 1 })
+            options.Add(new Opt(BasculinReckless, FilteredGameDataSource.GetAbilityItem(GameInfo.Strings.abilitylist, (int)PKHeX.Core.Ability.Reckless, '*').Text));
+        if (pk is PK5 { Species: (ushort)Species.Basculin, Form: 1, Ability: (int)PKHeX.Core.Ability.Reckless })
+            return (options, BasculinReckless);
+        return (options, Math.Clamp(GetAbilityIndex(pk, list.Count), 0, Math.Max(0, list.Count - 1)));
     }
+
+    /// <summary> Gen 5 Blue-Striped Basculin may have Reckless, which isn't one of its slots (PKMEditor.SetAbilityList adds it). </summary>
+    private const int BasculinReckless = 3;
 
     private static int GetAbilityIndex(PKM pk, int count)
     {
@@ -478,6 +556,7 @@ internal sealed class EditorService
                 else if (field.StartsWith("ht.", StringComparison.Ordinal)) SetHT(pk, field[3..], value);
                 else if (field.StartsWith("stats.", StringComparison.Ordinal)) SetStat(pk, field[6..], value);
                 else if (field.StartsWith("moves.", StringComparison.Ordinal)) SetMove(pk, field[6..], value);
+                else if (field.StartsWith("x.", StringComparison.Ordinal)) SetField(pk, field[2..], value);
                 else if (field.StartsWith("relearn.", StringComparison.Ordinal)) { if (pk.Format >= 6) pk.SetRelearnMove(int.Parse(field[8..], CultureInfo.InvariantCulture), (ushort)value.GetInt32()); }
                 else throw new ArgumentException($"Unknown field '{field}'.");
                 break;
@@ -489,7 +568,7 @@ internal sealed class EditorService
     {
         if (species > pk.MaxSpeciesID)
             return;
-        var abilityIndex = pk.Format >= 3 && !RawAbility(pk) ? GetAbilityIndex(pk, pk.PersonalInfo.AbilityCount) : -1;
+        var abilityIndex = AbilityFollowsSpecies(pk) ? GetAbilityIndex(pk, pk.PersonalInfo.AbilityCount) : -1;
         pk.Species = species;
         if (!HaX)
             pk.Form = 0;
@@ -524,6 +603,47 @@ internal sealed class EditorService
             "In Gen 3, Deoxys takes the forme of the game it's in: Normal in Ruby/Sapphire, Attack in FireRed, Defense in LeafGreen, Speed in Emerald.");
     }
 
+    /// <summary> PKMEditor's Ribbons / Memories / Medals buttons (BTN_Ribbons, BTN_History, BTN_Medals visibility). </summary>
+    private static List<string> GetDetailEditors(PKM pk)
+    {
+        var list = new List<string>(3);
+        if (pk.Format >= 3)
+            list.Add("ribbons");
+        if (pk.Format >= 6 && pk is not PB7)
+            list.Add("memories");
+        if (pk.Format is 6 or 7 && pk is not PB7 && pk is ISuperTrainRegimen)
+            list.Add("medals");
+        return list;
+    }
+
+    /// <summary> PKMEditor's move flag buttons this Pokémon has (Relearn Flags, Move Shop, Plus Flags). </summary>
+    private static List<string> GetMoveFlagEditors(PKM pk)
+    {
+        var list = new List<string>(3);
+        if (pk is ITechRecord)
+            list.Add("records");
+        if (pk is IMoveShop8Mastery)
+            list.Add("moveshop");
+        if (pk is IPlusRecord && pk.PersonalInfo is IPermitPlus)
+            list.Add("plus");
+        return list;
+    }
+
+    private readonly LegalMoveInfo LearnInfo = new();
+
+    /// <summary> Moves the Pokémon can legally know: PKMEditor's move list shows these first, highlighted (LegalMoveSource). </summary>
+    private List<int> GetLearnableMoves(LegalityAnalysis la, int maxMove)
+    {
+        LearnInfo.ReloadMoves(la);
+        var list = new List<int>();
+        for (ushort move = 1; move <= maxMove; move++)
+        {
+            if (LearnInfo.CanLearn(move))
+                list.Add(move);
+        }
+        return list;
+    }
+
     /// <summary> The form names PKMEditor's form list shows (also valid for forms the personal data doesn't count, e.g. Unown). </summary>
     private static string[] GetFormNames(PKM pk)
     {
@@ -541,7 +661,7 @@ internal sealed class EditorService
         var names = GetFormNames(pk);
         if (!HaX && form >= Math.Max(1, names.Length))
             throw new ArgumentOutOfRangeException(nameof(form), $"Form {form} doesn't exist for this species.");
-        var abilityIndex = pk.Format >= 3 && !RawAbility(pk) ? GetAbilityIndex(pk, pk.PersonalInfo.AbilityCount) : -1;
+        var abilityIndex = AbilityFollowsSpecies(pk) ? GetAbilityIndex(pk, pk.PersonalInfo.AbilityCount) : -1;
         if (pk.Format == 3 && pk.Species == (ushort)Species.Unown && form < names.Length)
             pk.SetPIDUnown3(form); // the PID search can only find Unown's 28 letters (HaX may go past them)
         pk.Form = form; // Gen 1/2 Unown: rerolls the DVs until they spell the letter
@@ -580,6 +700,21 @@ internal sealed class EditorService
         if (RawAbility(pk))
         {
             pk.Ability = value;
+            return;
+        }
+        if (value == BasculinReckless && pk is PK5 { Species: (ushort)Species.Basculin, Form: 1 } basculin)
+        {
+            basculin.Ability = (int)PKHeX.Core.Ability.Reckless;
+            basculin.HiddenAbility = false;
+            return;
+        }
+        if (pk is PA9 za)
+        {
+            // Z-A: the slot's ability comes from the birth species (see GetAbilitySlots).
+            var slots = GetAbilitySlots(pk);
+            var slot = Math.Clamp(value, 0, 2);
+            za.AbilityNumber = 1 << slot;
+            za.Ability = slots.GetAbilityAtIndex(slot);
             return;
         }
         var index = Math.Clamp(value, 0, pk.PersonalInfo.AbilityCount - 1);
@@ -844,6 +979,8 @@ internal sealed class EditorService
                 if (pk is IHyperTrain h && h.IsHyperTrained(index) != value.GetBoolean())
                     h.HyperTrainInvert(index);
                 break;
+            case "gv" when pk is IGanbaru g: g.SetGV(index, (byte)Math.Clamp(value.GetInt32(), 0, GanbaruExtensions.TrueMax)); break;
+            case "av" when pk is IAwakened a: a.SetAV(index, (byte)Math.Clamp(value.GetInt32(), 0, AwakeningUtil.AwakeningMax)); break;
             default: throw new ArgumentException($"Bad stat field '{path}'.");
         }
     }
@@ -995,6 +1132,33 @@ internal sealed class EditorService
             case "rerollEC":
                 if (pk.Format >= 6)
                     pk.SetRandomEC();
+                break;
+            case var f when f.StartsWith("field:", StringComparison.Ordinal):
+                message = SuggestField(pk, f[6..]);
+                if (message is not null)
+                    return message;
+                break;
+            // Shift+click on PKMEditor's move flag buttons: the flags the Pokémon can legally have.
+            case "legalRecords":
+                if (pk is not ITechRecord records)
+                    return "This Pokémon has no relearn flags.";
+                records.SetRecordFlags(pk, TechnicalRecordApplicatorOption.LegalCurrent);
+                break;
+            case "legalMoveShop":
+            {
+                if (pk is not IMoveShop8Mastery shop)
+                    return "This Pokémon has no Move Shop flags.";
+                shop.ClearMoveShopFlags();
+                var enc = Legality.EncounterMatch;
+                if (enc is IMasteryInitialMoveShop8 initial)
+                    initial.SetInitialMastery(pk, enc);
+                shop.SetMoveShopFlags(pk);
+                break;
+            }
+            case "legalPlus":
+                if (pk is not IPlusRecord plus || pk.PersonalInfo is not IPermitPlus permit)
+                    return "This Pokémon has no Plus flags.";
+                plus.SetPlusFlags(pk, permit, PlusRecordApplicatorOption.LegalCurrent);
                 break;
             default:
                 throw new ArgumentException($"Unknown suggestion '{what}'.");

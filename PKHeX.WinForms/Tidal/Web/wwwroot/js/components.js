@@ -14,7 +14,7 @@ window.TidalComponents = (() => {
     emits: ['update:modelValue'],
     setup(props, { emit }) {
       const open = ref(false), query = ref(''), hi = ref(0), input = ref(null), list = ref(null);
-      const pos = ref({ left: 0, top: 0, width: 0 });
+      const pos = ref({ left: 0, top: 0, bottom: null, width: 0, maxHeight: 330 });
       const selected = computed(() => props.options.find(o => o.v === props.modelValue));
       const filtered = computed(() => {
         const q = query.value.trim().toLowerCase();
@@ -29,10 +29,13 @@ window.TidalComponents = (() => {
         return starts.concat(contains).slice(0, 400);
       });
       const img = o => (o ? (o.img ?? (props.imgFor ? props.imgFor(o) : null)) : null);
+      /** Opens below the box, or above it (anchored to its top edge) when there's more room there. */
       function place() {
         const r = input.value.getBoundingClientRect();
-        const below = window.innerHeight - r.bottom;
-        pos.value = { left: r.left, width: Math.max(r.width, 220), top: below > 250 ? r.bottom + 6 : Math.max(10, r.top - 336) };
+        const below = window.innerHeight - r.bottom, above = r.top;
+        const up = below < 250 && above > below;
+        const room = (up ? above : below) - 16;
+        pos.value = { left: r.left, width: Math.max(r.width, 220), top: up ? null : r.bottom + 6, bottom: up ? window.innerHeight - r.top + 6 : null, maxHeight: Math.max(120, Math.min(330, room)) };
       }
       function show() {
         if (props.disabled || open.value) return;
@@ -67,9 +70,9 @@ window.TidalComponents = (() => {
                @focus="show" @click="show" @input="query = $event.target.value; if (!open) show()" @keydown="key">
         <t-icon class="chev" name="chevron"></t-icon>
         <teleport to="body">
-          <div v-if="open" class="dropdown" ref="list" :style="{ left: pos.left + 'px', top: pos.top + 'px', width: pos.width + 'px' }">
-            <div v-for="(o, i) in filtered" :key="o.v" class="opt" :class="{ hi: i === hi, sel: o.v === modelValue }" @mousedown.prevent="choose(o)" @mouseenter="hi = i">
-              <img v-if="img(o)" :src="img(o)" alt="" loading="lazy"><span>{{ o.t }}</span><span v-if="o.meta" class="meta">{{ o.meta }}</span>
+          <div v-if="open" class="dropdown" ref="list" :style="{ left: pos.left + 'px', width: pos.width + 'px', top: pos.top != null ? pos.top + 'px' : 'auto', bottom: pos.bottom != null ? pos.bottom + 'px' : 'auto', maxHeight: pos.maxHeight + 'px' }">
+            <div v-for="(o, i) in filtered" :key="o.v" class="opt" :class="[o.cls, { hi: i === hi, sel: o.v === modelValue }]" @mousedown.prevent="choose(o)" @mouseenter="hi = i">
+              <slot name="option" :o="o"><img v-if="img(o)" :src="img(o)" alt="" loading="lazy"><span>{{ o.t }}</span><span v-if="o.meta" class="meta">{{ o.meta }}</span></slot>
             </div>
             <div v-if="!filtered.length" class="empty">No matches</div>
           </div>
@@ -251,5 +254,69 @@ window.TidalComponents = (() => {
     methods: { run(it) { this.store.ctx = null; it.run(); } },
   };
 
-  return { TIcon, TCombo, TGames, TDialog, TTool, TSwitch, TTri, TNumber, TText, TModal, TToasts, TCtx };
+
+  // Format-specific editor fields described by the host (EditorFields.cs): grouped, drawn by kind.
+  const MARKS6 = ['●', '▲', '■', '♥', '★', '◆'];
+  const MARKS4 = ['●', '■', '▲', '♥']; // Gen 3 order
+  const TFields = {
+    props: { fields: { type: Array, default: () => [] }, moveOptions: Array, imgFor: Function },
+    emits: ['set', 'suggest'],
+    data: () => ({ byteIndex: 0 }),
+    computed: {
+      groups() {
+        const map = new Map();
+        for (const f of this.fields) {
+          if (!map.has(f.group)) map.set(f.group, []);
+          map.get(f.group).push(f);
+        }
+        return [...map.entries()].map(([name, items]) => ({ name, items }));
+      },
+    },
+    methods: {
+      set(f, v) { this.$emit('set', f.key, v); },
+      marks(f) { return f.value.length === 4 ? MARKS4 : MARKS6; },
+      cycleMark(f, i) {
+        const next = [...f.value];
+        next[i] = (next[i] + 1) % (f.max + 1);
+        this.set(f, next);
+      },
+      toggleFlag(f, bit) { this.set(f, f.value ^ bit); },
+      byteAt(f) { return f.value[Math.min(this.byteIndex, f.value.length - 1)] ?? [0, 0]; },
+      hex(n) { return '0x' + n.toString(16).toUpperCase().padStart(2, '0'); },
+    },
+    template: `
+      <div class="xfields">
+        <template v-for="g in groups" :key="g.name">
+          <div v-if="g.name" class="section-title">{{ g.name }}</div>
+          <div class="form-grid">
+            <div v-for="f in g.items" :key="f.key" class="field" :class="['xf-' + f.kind]">
+              <label v-if="f.label !== g.name">{{ f.label }}</label>
+              <div v-if="f.kind === 'bool'" class="xf-switch"><t-switch :model-value="f.value" @update:model-value="v => set(f, v)" :label="f.value ? 'Yes' : 'No'"></t-switch></div>
+              <div v-else-if="f.kind === 'number'" class="row xf-num">
+                <t-number :model-value="f.value" :min="f.min" :max="f.max" @update:model-value="v => set(f, v)"></t-number>
+                <button v-if="f.suggest" class="btn small icon-only" title="Suggest" @click="$emit('suggest', f.key)"><t-icon name="wand"></t-icon></button>
+              </div>
+              <t-combo v-else-if="f.kind === 'select'" :model-value="f.value" :options="f.options ?? []" no-icon @update:model-value="v => set(f, v)"></t-combo>
+              <t-combo v-else-if="f.kind === 'move'" class="move-combo" :model-value="f.value" :options="moveOptions ?? []" :img-for="imgFor" @update:model-value="v => set(f, v)"></t-combo>
+              <t-text v-else-if="f.kind === 'hex'" cls="mono" :model-value="f.value" :maxlength="f.max" @update:model-value="v => set(f, v)"></t-text>
+              <input v-else-if="f.kind === 'datetime'" class="input" type="datetime-local" step="1" :value="f.value" @change="set(f, $event.target.value)">
+              <div v-else-if="f.kind === 'flags'" class="xf-chips">
+                <button v-for="o in f.options" :key="o.v" class="chip" :class="{ on: (f.value & o.v) !== 0 }" @click="toggleFlag(f, o.v)">{{ o.t }}</button>
+              </div>
+              <div v-else-if="f.kind === 'marks'" class="xf-marks">
+                <button v-for="(m, i) in f.value" :key="i" class="mark" :class="['m' + m]" :title="f.max > 1 ? 'Click: blue → pink → off' : 'Click to toggle'" @click="cycleMark(f, i)">{{ marks(f)[i] }}</button>
+              </div>
+              <div v-else-if="f.kind === 'bytes'" class="row xf-bytes">
+                <select class="input" v-model.number="byteIndex"><option v-for="(b, i) in f.value" :key="b[0]" :value="i">{{ hex(b[0]) }}</option></select>
+                <t-number :model-value="byteAt(f)[1]" :min="0" :max="255" @update:model-value="v => $emit('set', 'extra.' + byteAt(f)[0], v)"></t-number>
+              </div>
+              <div v-else class="input readonly">{{ f.value || '—' }}</div>
+              <small v-if="f.hint" class="field-hint">{{ f.hint }}</small>
+            </div>
+          </div>
+        </template>
+      </div>`,
+  };
+
+  return { TIcon, TCombo, TGames, TDialog, TTool, TSwitch, TTri, TNumber, TText, TModal, TToasts, TCtx, TFields };
 })();
