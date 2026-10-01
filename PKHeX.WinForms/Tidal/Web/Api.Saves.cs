@@ -327,7 +327,7 @@ internal sealed partial class WebApi
     /// <summary> Order within a generation (GameVersion values aren't in release order for older games). </summary>
     private static int GetReleaseOrder(GameVersion version) => version switch
     {
-        RD or GN or RB => 0, BU => 1, YW or RBY => 2, StadiumJ or Stadium => 3,
+        RD or RB => 0, GN => 1, BU => 2, YW or RBY => 3, StadiumJ or Stadium => 4, // GN: Green, and Blue outside Japan
         GD or GS => 0, SI => 1, C or GSC => 2, Stadium2 => 3,
         R or RS => 0, S => 1, E or RSE => 2, FR or FRLG => 3, LG => 4, COLO or CXD => 5, XD => 6, RSBOX => 7,
         D or DP => 0, P => 1, Pt or DPPt => 2, HG or HGSS => 3, SS => 4, BATREV => 5,
