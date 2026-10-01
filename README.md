@@ -19,7 +19,7 @@
 
 TidalHeX is a fork of PKHeX that replaces the classic Windows Forms window with a new animated interface, styled after a game console's home menu and the Rotom Dex. Underneath, it is still PKHeX: saves are read and written by PKHeX's own engine (`PKHeX.Core`, unchanged), with the same legality checker and the same encounter and Mystery Gift data. TidalHeX edits your saves exactly the way PKHeX does.
 
-PKHeX plugins work too: drop them in the `plugins` folder next to the exe and their commands appear under Save Tools. The classic PKHeX window is still one click away for anything the new interface doesn't cover yet.
+A built-in **Save Manager** lists every save you keep in the `saves` folder next to the exe, raw files or `.zip` backups, with each game's box art, so switching games is a double-click. PKHeX plugins work too: drop them in the `plugins` folder and their commands appear under Save Tools. The classic PKHeX window is still one click away for anything the new interface doesn't cover yet.
 
 **We do not support or condone cheating at the expense of others. Do not use significantly hacked Pokémon in battle or in trades with those who are unaware hacked Pokémon are in use.**
 
@@ -49,13 +49,13 @@ The classic PKHeX window is still there, restyled with the TidalHeX ocean theme.
 
 ### A new interface
 
-- **Home screen** with your party along the top, large tiles for Pokémon, Boxes, Encounters, Mystery Gifts, Save Tools, Open File and your recent saves, and a dock for quick actions (open, export, check every Pokémon, settings, classic mode).
+- **Home screen** with your party along the top, large tiles for Pokémon, Boxes, Encounters, Mystery Gifts, Save Tools, Open File and your recent saves, and a dock for quick actions (open, Save Manager, export, check every Pokémon, settings, classic mode).
 - **Boxes**: a large box grid with your party and a details panel. Drag to move, Shift+drag to clone, Alt+drag to overwrite, with undo and redo. Drop a Pokémon or Mystery Gift file onto a slot to place it straight into that slot.
 - **Pokémon editor** split into Overview, Met, Stats, Moves, Trainer and Extras, with a large sprite, a live legality card, a stat chart and one-click actions (max IVs, suggested moves, suggested met location and more). Ribbons, memories and medals open PKHeX's own editors.
 - **PKHeX's editor shortcuts kept**: Alt+click the shiny star to keep the PID and change the SID (so PID/IV-correlated Pokémon stay legal), Shift+click for a square shiny, Ctrl+click for a star shiny.
 - **Forms**: the form picker shows each form's sprite, gender forms (Meowstic, Indeedee and others) stay in step with the gender, and Gen 3 Deoxys explains that its forme comes from the game it's in.
 - **In-app messages**: PKHeX's questions and errors appear inside the interface instead of Windows message boxes.
-- **Keyboard friendly**: Q/E switch pages (the L/R buttons), Esc goes back, Ctrl+1–5 jump to a page, Ctrl+O opens a file and Ctrl+E exports the save. Each screen lists its actions along the bottom.
+- **Keyboard friendly**: Q/E switch pages (the L/R buttons), Esc goes back, Ctrl+1–6 jump to a page, Ctrl+O opens a file and Ctrl+E exports the save. Each screen lists its actions along the bottom.
 - **Light on your PC**: the background animation only runs on the home screen while the window is focused, and pauses when minimized. A "Reduce motion" setting turns it off entirely.
 
 ### Easier Encounter and Mystery Gift databases
@@ -71,6 +71,48 @@ The classic PKHeX window is still there, restyled with the TidalHeX ocean theme.
 - **Items**, **Trainer Info**, **Box Layout** and **Pokédex** are rebuilt inside the interface, with the same rules as PKHeX's editors. Nothing is written until you press Save, and leaving with unsaved changes asks first.
 - Every other save editor opens PKHeX's own window, restyled to match. Each rebuilt tool also has a **More options** button that opens the classic editor for game-specific details.
 - **Plugins**: PKHeX plugins in the `plugins` folder next to the exe load at startup, just like in PKHeX. Everything they add to PKHeX's Tools menu shows up in a **Plugins** section of Save Tools, with their submenus as groups, and commands that don't apply to the loaded game hidden. Plugin windows get the TidalHeX theme. Startup setting `PluginLoadEnable` turns plugins off.
+
+### Save Manager
+
+Keep all your saves next to TidalHeX and switch between them with a double-click.
+
+![Save Manager](.github/screenshots/savemanager.webp)
+
+**How to use it**
+
+1. Make a folder named `saves` next to `TidalHeX.exe`, or open the Save Manager and click **Open folder** (it creates the folder for you).
+2. Put your saves in it: raw save files (`main`, `*.sav`, `*.dsv`, `*.bin`, …) or `.zip` backups, such as the ones JKSV makes for Switch games.
+3. Optionally, sort them into folders. Each folder becomes a group, and common console names get a proper title (`gb`, `gbc`, `gba`, `gc`, `ds`, `3ds`, `switch`). Any other folder name is shown as it is.
+
+   ```
+   TidalHeX.exe
+   saves/
+   ├── gba/
+   │   └── Emerald.sav
+   ├── ds/
+   │   └── Black 2.sav
+   └── switch/
+       ├── shield.zip
+       └── legends za.zip
+   ```
+
+4. Open the Save Manager from the home screen dock or the **Save Manager** tab at the top.
+5. **Double-click** a save to load it and jump straight to its boxes. You can also point at a save and press A or Enter, or move with the arrow keys.
+
+**What each save shows**
+
+- The game's box art. Saves that don't record which game of a pair they're from (like Ruby/Sapphire) show both.
+- Trainer name and gender, TID and SID. The SID is hidden when PKHeX's "Hide secret details" privacy setting is on.
+- Play time, the date the adventure started, money and the number of Pokémon caught. The start date shows for Gen 4 onward; Gen 1–3, Let's Go and Legends: Z-A don't have one.
+- Language, generation and ZIP badges, plus **Open now** on the save that's loaded.
+- The party, and when the file was last saved.
+
+**Good to know**
+
+- Groups go from the oldest console to the newest, and saves in each group are sorted by generation. Use the search box or the Gen buttons to filter.
+- The folder is read when TidalHeX starts, so the list is ready right away. It refreshes when you switch back to TidalHeX or press **Refresh** (Y or F5), so new files show up without restarting.
+- A save inside a `.zip` is read straight from the zip, and the zip is never changed. When you export, TidalHeX asks where to save it. Plain save files work exactly like opening them with Open File, including PKHeX's automatic backups and the recent files list.
+- Files that aren't saves are skipped, and the page tells you how many there were.
 
 ### Classic mode
 
@@ -131,4 +173,4 @@ TidalHeX is built on [PKHeX](https://github.com/kwsch/PKHeX) by Kaphotics and it
 - [Microsoft Edge WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) hosts it.
 - From PKHeX: QR code generation from [QRCoder](https://github.com/codebude/QRCoder) ([MIT](https://github.com/codebude/QRCoder/blob/master/LICENSE.txt)), the shiny sprite collection from [pokesprite](https://github.com/msikma/pokesprite) ([MIT](https://github.com/msikma/pokesprite/blob/master/LICENSE)), and the Pokémon Legends: Arceus sprite collection from the [National Pokédex - Icon Dex](https://www.deviantart.com/pikafan2000/art/National-Pokedex-Version-Delta-Icon-Dex-824897934) project and its contributors.
 
-Pokémon and all related names, sprites and data are © Nintendo, Game Freak and The Pokémon Company. TidalHeX is a fan project and is not affiliated with or endorsed by them.
+Pokémon and all related names, sprites, game art and data are © Nintendo, Game Freak and The Pokémon Company. TidalHeX is a fan project and is not affiliated with or endorsed by them.

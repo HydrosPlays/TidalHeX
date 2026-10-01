@@ -128,3 +128,60 @@ public sealed record ToolInfo
 /// Combo list entry (<c>list.get</c>).
 /// </summary>
 public sealed record ListItem(int V, string T);
+
+/// <summary> Save Manager: the saves in the "saves" folder, one group per sub-folder. </summary>
+public sealed record LibraryResult
+{
+    /// <summary> Full path of the folder. </summary>
+    public string Folder { get; init; } = string.Empty;
+    public List<LibraryGroup> Groups { get; init; } = [];
+    /// <summary> Files that aren't saves PKHeX recognizes (relative paths). </summary>
+    public List<string> Skipped { get; init; } = [];
+}
+
+public sealed record LibraryGroup
+{
+    /// <summary> Sub-folder relative to the saves folder, "" for saves directly in it. </summary>
+    public string Key { get; init; } = string.Empty;
+    /// <summary> Display name, e.g. "Nintendo Switch" for a "switch" folder. </summary>
+    public string Name { get; init; } = string.Empty;
+    public List<LibrarySave> Saves { get; init; } = [];
+}
+
+public sealed record LibrarySave
+{
+    public string Id { get; init; } = string.Empty;
+    public string FileName { get; init; } = string.Empty;
+    /// <summary> The save's name inside a .zip; null for plain files. </summary>
+    public string? Entry { get; init; }
+    public int Version { get; init; }
+    public string Game { get; init; } = string.Empty;
+    public int Generation { get; init; }
+    public string Ot { get; init; } = string.Empty;
+    public string Tid { get; init; } = string.Empty;
+    /// <summary> Empty when PKHeX's "hide secret details" privacy setting is on, or the game has no SID. </summary>
+    public string Sid { get; init; } = string.Empty;
+    /// <summary> "38h 13m 47s". </summary>
+    public string PlayTime { get; init; } = string.Empty;
+    /// <summary> Badge text, e.g. "ENG". </summary>
+    public string Language { get; init; } = string.Empty;
+    public string LanguageName { get; init; } = string.Empty;
+    /// <summary> Adventure start date (yyyy-MM-dd), empty for games that don't store one. </summary>
+    public string Started { get; init; } = string.Empty;
+    /// <summary> Trainer gender: 0 male, 1 female, -1 none (Gen 1, Gold/Silver). </summary>
+    public int Gender { get; init; } = -1;
+    public uint Money { get; init; }
+    /// <summary> Pokédex caught count, -1 without a Pokédex. </summary>
+    public int DexCaught { get; init; } = -1;
+    public long Size { get; init; }
+    /// <summary> Last write time, ISO 8601 local time. </summary>
+    public string Modified { get; init; } = string.Empty;
+    /// <summary> Box art icons (img/games/...): one per game, two for saves shared by a pair (e.g. Ruby/Sapphire). </summary>
+    public List<string> Icons { get; init; } = [];
+    public List<LibraryMon> Party { get; init; } = [];
+    /// <summary> The save currently open. </summary>
+    public bool Loaded { get; init; }
+    public string? Note { get; init; }
+}
+
+public sealed record LibraryMon(ushort Species, byte Form, byte Gender, bool Shiny, bool Egg);

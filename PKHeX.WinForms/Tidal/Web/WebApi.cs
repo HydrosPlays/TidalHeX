@@ -51,6 +51,7 @@ internal sealed partial class WebApi
         RegisterPokedexTool();
         RegisterPlugins();
         RegisterEditor();
+        RegisterSaves();
     }
 
     #region Global initialization (mirrors Main.FormInitializeSecond / ReloadProgramSettings / ApplyMainLanguage)
@@ -373,14 +374,14 @@ internal sealed partial class WebApi
     }
 
     /// <summary> TID/SID as the games display them (TrainerIDFormat). </summary>
-    private static string FormatTrainerId(SaveFile sav, bool secret) => sav.TrainerIDDisplayFormat switch
+    internal static string FormatTrainerId(SaveFile sav, bool secret) => sav.TrainerIDDisplayFormat switch
     {
         TrainerIDFormat.SixDigit => secret ? sav.DisplaySID.ToString("D4") : sav.DisplayTID.ToString("D6"),
         TrainerIDFormat.SixteenBitSingle => secret ? string.Empty : sav.DisplayTID.ToString("D5"),
         _ => (secret ? sav.DisplaySID : sav.DisplayTID).ToString("D5"),
     };
 
-    private static string GetPlayTime(SaveFile sav)
+    internal static string GetPlayTime(SaveFile sav)
     {
         try { return sav.PlayTimeString.Replace('ː', ':'); }
         catch { return string.Empty; }
@@ -409,7 +410,7 @@ internal sealed partial class WebApi
         return count;
     }
 
-    private static int GetDexCaught(SaveFile sav)
+    internal static int GetDexCaught(SaveFile sav)
     {
         if (!sav.HasPokeDex)
             return 0;

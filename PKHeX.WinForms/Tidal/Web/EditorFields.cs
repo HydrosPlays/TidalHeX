@@ -57,9 +57,14 @@ internal sealed partial class EditorService
             list.Add(new FieldDto("hpType", SecStats, "", "Hidden Power", "select", pk.HPType) { Options = GetHiddenPowerTypes(), Hint = "Changing it adjusts the IVs" });
         if (pk is ITeraType tera)
         {
-            var options = GetTeraTypes();
-            list.Add(new FieldDto("teraOriginal", SecStats, "Tera Type", "Original", "select", (int)tera.TeraTypeOriginal) { Options = options[1..] });
-            list.Add(new FieldDto("teraOverride", SecStats, "Tera Type", "Override", "select", (int)tera.TeraTypeOverride) { Options = options });
+            var options = GetTeraTypes(sav.Generation);
+            list.Add(new FieldDto("teraOriginal", SecStats, "Tera Type", "Original", "select", (int)tera.TeraTypeOriginal) { Options = options[1..], Suggest = true, SuggestTip = pk.SV ? "Use the species' type (again for its other type)" : "HOME's Tera Type for this species" });
+            list.Add(new FieldDto("teraOverride", SecStats, "Tera Type", "Override", "select", (int)tera.TeraTypeOverride) { Options = options, Suggest = true, SuggestTip = pk.SV ? "Clear the override" : "Match the original" });
+
+            // StatEditor's gem: the type it Terastallizes into (the override if set).
+            var active = (byte)tera.GetTeraType();
+            if (IsTeraTypeShown(active))
+                list.Add(new FieldDto("teraGem", SecStats, "Tera Type", "Tera Type", "image", $"/sprite/gem/{active}") { Hint = $"Terastallizes into {GetTeraTypeName(active)}" });
         }
         if (pk is IAlpha alpha)
             list.Add(new FieldDto("alpha", SecStats, "Legends", "Alpha", "bool", alpha.IsAlpha));
@@ -220,15 +225,19 @@ internal sealed partial class EditorService
     }
 
     /// <summary> StatEditor's Tera list: (none), the 18 types, Stellar. Index 0 is the override's "none". </summary>
-    private static List<Opt> GetTeraTypes()
+    private static List<Opt> GetTeraTypes(byte generation)
     {
         var types = GameInfo.Strings.types;
         var list = new List<Opt> { new(TeraTypeUtil.OverrideNone, "(None)") };
         for (int i = 0; i < TeraTypeUtil.StellarTypeDisplayStringIndex; i++)
-            list.Add(new Opt(i, types[i]));
-        list.Add(new Opt(TeraTypeUtil.Stellar, types[TeraTypeUtil.StellarTypeDisplayStringIndex]));
+            list.Add(new Opt(i, types[i]) { Img = $"/sprite/type/{i}?v={generation}" });
+        list.Add(new Opt(TeraTypeUtil.Stellar, types[TeraTypeUtil.StellarTypeDisplayStringIndex]) { Img = $"/sprite/type/{TeraTypeUtil.Stellar}?v={generation}" });
         return list;
     }
+
+    private static bool IsTeraTypeShown(byte type) => type < TeraTypeUtil.StellarTypeDisplayStringIndex || type == TeraTypeUtil.Stellar;
+
+    private static string GetTeraTypeName(byte type) => GameInfo.Strings.types[type == TeraTypeUtil.Stellar ? TeraTypeUtil.StellarTypeDisplayStringIndex : type];
 
     private static List<Opt> ToOpts(IEnumerable<ComboItem> items) => items.Select(z => new Opt(z.Value, z.Text)).ToList();
 
@@ -435,6 +444,20 @@ internal sealed partial class EditorService
                 return null;
             case "cp" when pk is ICombatPower cp:
                 cp.ResetCP();
+                return null;
+            case "teraOriginal" when pk is ITeraType t:
+            {
+                // StatEditor.L_TeraTypeOriginal_Click: SV natives alternate between the species' types, others get HOME's pick.
+                var pi = pk.PersonalInfo;
+                t.TeraTypeOriginal = !pk.SV
+                    ? TeraTypeUtil.GetTeraTypeImport(pi.Type1, pi.Type2)
+                    : (MoveType)((byte)t.TeraTypeOriginal == pi.Type1 ? pi.Type2 : pi.Type1);
+                t.TeraTypeOverride = (MoveType)TeraTypeUtil.OverrideNone;
+                return null;
+            }
+            case "teraOverride" when pk is ITeraType t:
+                // StatEditor.L_TeraTypeOverride_Click
+                t.TeraTypeOverride = pk.SV ? (MoveType)TeraTypeUtil.OverrideNone : t.TeraTypeOriginal;
                 return null;
             default:
                 return "No suggestion is available for that.";

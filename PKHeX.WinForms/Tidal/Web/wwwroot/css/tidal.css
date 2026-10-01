@@ -248,7 +248,14 @@ img.sprite { image-rendering: var(--sprite-render); }
 .xfields .section-title { margin: 8px 0 0; }
 .xf-switch { height: 40px; display: flex; align-items: center; }
 .xf-num { gap: 8px; align-items: center; }
-.xf-num .btn.icon-only { width: 40px; height: 40px; padding: 0; justify-content: center; flex: none; }
+.xf-num .btn.icon-only, .xf-sel .btn.icon-only { width: 40px; height: 40px; padding: 0; justify-content: center; flex: none; }
+.xf-sel { gap: 8px; }
+.xf-sel .combo { flex: 1; min-width: 0; }
+.combo.icon-combo .icon { width: 20px; height: 20px; left: 12px; image-rendering: auto; }
+.combo.icon-combo.has-icon .input { padding-left: 40px; }
+.xf-group { display: flex; align-items: center; gap: 18px; }
+.xf-group > .form-grid { flex: 1; min-width: 0; }
+.xf-image { width: 64px; height: 64px; flex: none; filter: drop-shadow(0 6px 14px rgba(0, 10, 40, .45)); }
 .xf-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 40px; align-items: center; }
 .xf-marks { display: flex; gap: 8px; height: 40px; align-items: center; }
 .xf-marks .mark { width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid var(--inset-border); background: var(--inset); color: rgba(255, 255, 255, .28); font-size: 17px; cursor: pointer; transition: all .15s; }
@@ -351,7 +358,8 @@ img.sprite { image-rendering: var(--sprite-render); }
 .tile .art.sprites img { width: 100%; height: auto; }
 .tile h3 { margin: 0; font-family: var(--font-display); font-size: 21px; font-weight: 700; text-shadow: 0 2px 10px rgba(0, 20, 60, .45); }
 .tile p { margin: 3px 0 0; font-size: 12.5px; color: rgba(255, 255, 255, .9); }
-.tile.sel { box-shadow: var(--ring), 0 26px 50px -18px rgba(0, 20, 60, .8); transform: scale(1.03); }
+/* Highlighted under the mouse, or when picked with the arrow keys (not on its own when the screen opens). */
+.tile:hover, .tile.sel { box-shadow: var(--ring), 0 26px 50px -18px rgba(0, 20, 60, .8); transform: scale(1.03); }
 
 .dock-wrap { display: grid; place-items: center; padding: 0 0 10px; }
 .dock {
@@ -509,6 +517,59 @@ img.sprite { image-rendering: var(--sprite-render); }
 .empty-state { height: 100%; display: grid; place-items: center; align-content: center; text-align: center; color: var(--text-soft); padding: 30px; }
 .empty-state svg { width: 64px; height: 64px; opacity: .8; margin: 0 auto 10px; }
 .empty-state .btn svg { width: 18px; height: 18px; opacity: 1; margin: 0; }
+
+/* ---------- Save Manager ---------- */
+.saves { padding: 18px 22px 24px; min-height: 100%; display: flex; flex-direction: column; gap: 22px; }
+.saves-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.saves-bar .input { width: 260px; flex: none; }
+.saves-bar .gen-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.saves-bar .btn.spinning svg { animation: saves-spin 1s linear infinite; }
+@keyframes saves-spin { to { transform: rotate(360deg); } }
+.save-group .card-title { display: flex; align-items: baseline; gap: 6px; }
+.save-group .card-title .muted { letter-spacing: .08em; }
+.saves-folder { margin-left: auto; font-family: var(--mono); font-size: 11px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-muted); }
+.save-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
+.save-card { position: relative; display: flex; gap: 14px; align-items: center; padding: 12px 14px 12px 12px; border-radius: 20px; cursor: pointer; text-align: left; color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .07); transition: transform .2s var(--ease), background .2s, box-shadow .2s; }
+/* Highlighted only under the mouse (or when picked with the arrow keys), like the Save Tools list. */
+.save-card:hover, .save-card.sel { transform: translateY(-3px); background: rgba(255, 255, 255, .16); box-shadow: var(--ring-soft); }
+.save-card.loaded { border-color: rgba(126, 244, 255, .7); }
+.save-card.busy { opacity: .7; pointer-events: none; }
+.save-art { position: relative; width: 92px; height: 92px; flex: none; align-self: flex-start; margin-top: 2px; }
+.save-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 16px; box-shadow: 0 8px 18px -6px rgba(0, 12, 40, .7), inset 0 0 0 1px rgba(255, 255, 255, .2); }
+/* Saves shared by a pair (Ruby/Sapphire, Black/White...): both box arts, overlapping. */
+.save-art.pair img { width: 68%; height: 68%; border-radius: 12px; }
+.save-art.pair img.n0 { inset: 0 auto auto 0; }
+.save-art.pair img.n1 { inset: auto 0 0 auto; }
+.save-art-blank { position: absolute; inset: 0; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px; text-align: center;
+  background: linear-gradient(150deg, #2a4f8f, #15306a 60%, #0b1f4c); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .25); }
+.save-art-blank svg { width: 26px; height: 26px; color: var(--cyan); }
+.save-art-blank small { font-size: 10.5px; font-weight: 700; line-height: 1.15; color: var(--text-soft); }
+.save-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.save-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.save-title > b { flex: 1; min-width: 0; font-size: 15.5px; font-family: var(--font-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.save-info .sub { font-size: 12.5px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.save-trainer { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--text-soft); white-space: nowrap; overflow: hidden; }
+.save-trainer b { font-size: 13px; color: #fff; margin-left: -4px; }
+.save-trainer .g { font-weight: 800; font-size: 14px; }
+.save-trainer .g.m { color: #6fc2ff; }
+.save-trainer .g.f { color: #ff7ab8; }
+.save-stats { display: flex; flex-wrap: wrap; gap: 3px 12px; font-size: 12px; color: var(--text-soft); }
+.save-stats > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.save-stats svg { width: 13px; height: 13px; color: var(--cyan); }
+.save-stats .pd { font-style: normal; font-weight: 800; color: var(--cyan); font-size: 12px; }
+.save-party { display: flex; align-items: flex-end; gap: 5px; height: 28px; margin: 2px 0 1px; }
+.save-party img { height: 26px; max-width: 32px; object-fit: contain; object-position: bottom; image-rendering: var(--sprite-render); filter: drop-shadow(0 2px 3px rgba(0, 12, 40, .45)); }
+.save-file { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.save-tags { display: flex; gap: 5px; flex: none; }
+.save-tag { height: 20px; padding: 0 8px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; background: rgba(3, 30, 82, .5); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28); color: var(--text-soft); }
+.save-tag.open { background: var(--cyan); color: var(--sky-5); box-shadow: none; }
+.save-tag.lang { background: rgba(126, 244, 255, .16); box-shadow: inset 0 0 0 1px rgba(126, 244, 255, .6); color: var(--cyan); }
+.save-busy { position: absolute; right: 14px; bottom: 10px; font-size: 12px; font-weight: 700; color: var(--cyan); }
+.saves-empty p { max-width: 520px; margin: 8px auto 0; line-height: 1.5; }
+.saves-path { font-family: var(--mono); font-size: 12px; color: var(--text-muted); margin: 10px auto 16px !important; word-break: break-all; }
+.saves-skipped { margin: 0; font-size: 12px; text-align: center; cursor: help; }
+@media (max-width: 640px) { .saves-bar .input { width: 100%; } .save-grid { grid-template-columns: 1fr; } }
 
 /* ---------- Tools ---------- */
 .tools { display: flex; flex-direction: column; gap: 22px; }

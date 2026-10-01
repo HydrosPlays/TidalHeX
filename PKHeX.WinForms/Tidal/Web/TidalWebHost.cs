@@ -74,6 +74,7 @@ public sealed class TidalWebHost : Form
         Api.InitializeGlobals();
         Api.AttachPlugins();
         Api.LoadInitialFiles(startup);
+        Api.StartLibraryScan();
     }
 
     private static WebView2 CreateView() => new()

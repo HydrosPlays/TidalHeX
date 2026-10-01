@@ -269,11 +269,13 @@ window.TidalComponents = (() => {
           if (!map.has(f.group)) map.set(f.group, []);
           map.get(f.group).push(f);
         }
-        return [...map.entries()].map(([name, items]) => ({ name, items }));
+        // An "image" field (e.g. the Tera gem) sits beside its group's fields instead of in the grid.
+        return [...map.entries()].map(([name, items]) => ({ name, items: items.filter(f => f.kind !== 'image'), image: items.find(f => f.kind === 'image') }));
       },
     },
     methods: {
       set(f, v) { this.$emit('set', f.key, v); },
+      hasImg(f) { return !!f.options?.some(o => o.img); },
       marks(f) { return f.value.length === 4 ? MARKS4 : MARKS6; },
       cycleMark(f, i) {
         const next = [...f.value];
@@ -288,31 +290,39 @@ window.TidalComponents = (() => {
       <div class="xfields">
         <template v-for="g in groups" :key="g.name">
           <div v-if="g.name" class="section-title">{{ g.name }}</div>
-          <div class="form-grid">
-            <div v-for="f in g.items" :key="f.key" class="field" :class="['xf-' + f.kind]">
-              <label v-if="f.label !== g.name">{{ f.label }}</label>
-              <div v-if="f.kind === 'bool'" class="xf-switch"><t-switch :model-value="f.value" @update:model-value="v => set(f, v)" :label="f.value ? 'Yes' : 'No'"></t-switch></div>
-              <div v-else-if="f.kind === 'number'" class="row xf-num">
-                <t-number :model-value="f.value" :min="f.min" :max="f.max" @update:model-value="v => set(f, v)"></t-number>
-                <button v-if="f.suggest" class="btn small icon-only" title="Suggest" @click="$emit('suggest', f.key)"><t-icon name="wand"></t-icon></button>
+          <div class="xf-group">
+            <div class="form-grid">
+              <div v-for="f in g.items" :key="f.key" class="field" :class="['xf-' + f.kind]">
+                <label v-if="f.label !== g.name">{{ f.label }}</label>
+                <div v-if="f.kind === 'bool'" class="xf-switch"><t-switch :model-value="f.value" @update:model-value="v => set(f, v)" :label="f.value ? 'Yes' : 'No'"></t-switch></div>
+                <div v-else-if="f.kind === 'number'" class="row xf-num">
+                  <t-number :model-value="f.value" :min="f.min" :max="f.max" @update:model-value="v => set(f, v)"></t-number>
+                  <button v-if="f.suggest" class="btn small icon-only" :title="f.suggestTip ?? 'Suggest'" @click="$emit('suggest', f.key)"><t-icon name="wand"></t-icon></button>
+                </div>
+                <div v-else-if="f.kind === 'select'" class="row xf-sel">
+                  <t-combo :class="{ 'icon-combo': hasImg(f) }" :model-value="f.value" :options="f.options ?? []" :no-icon="!hasImg(f)" @update:model-value="v => set(f, v)">
+                    <template v-if="hasImg(f)" #option="{ o }"><img v-if="o.img" class="type-ic" :src="o.img" alt=""><span>{{ o.t }}</span></template>
+                  </t-combo>
+                  <button v-if="f.suggest" class="btn small icon-only" :title="f.suggestTip ?? 'Suggest'" @click="$emit('suggest', f.key)"><t-icon name="wand"></t-icon></button>
+                </div>
+                <t-combo v-else-if="f.kind === 'move'" class="move-combo" :model-value="f.value" :options="moveOptions ?? []" :img-for="imgFor" @update:model-value="v => set(f, v)"></t-combo>
+                <t-text v-else-if="f.kind === 'hex'" cls="mono" :model-value="f.value" :maxlength="f.max" @update:model-value="v => set(f, v)"></t-text>
+                <input v-else-if="f.kind === 'datetime'" class="input" type="datetime-local" step="1" :value="f.value" @change="set(f, $event.target.value)">
+                <div v-else-if="f.kind === 'flags'" class="xf-chips">
+                  <button v-for="o in f.options" :key="o.v" class="chip" :class="{ on: (f.value & o.v) !== 0 }" @click="toggleFlag(f, o.v)">{{ o.t }}</button>
+                </div>
+                <div v-else-if="f.kind === 'marks'" class="xf-marks">
+                  <button v-for="(m, i) in f.value" :key="i" class="mark" :class="['m' + m]" :title="f.max > 1 ? 'Click: blue → pink → off' : 'Click to toggle'" @click="cycleMark(f, i)">{{ marks(f)[i] }}</button>
+                </div>
+                <div v-else-if="f.kind === 'bytes'" class="row xf-bytes">
+                  <select class="input" v-model.number="byteIndex"><option v-for="(b, i) in f.value" :key="b[0]" :value="i">{{ hex(b[0]) }}</option></select>
+                  <t-number :model-value="byteAt(f)[1]" :min="0" :max="255" @update:model-value="v => $emit('set', 'extra.' + byteAt(f)[0], v)"></t-number>
+                </div>
+                <div v-else class="input readonly">{{ f.value || '—' }}</div>
+                <small v-if="f.hint" class="field-hint">{{ f.hint }}</small>
               </div>
-              <t-combo v-else-if="f.kind === 'select'" :model-value="f.value" :options="f.options ?? []" no-icon @update:model-value="v => set(f, v)"></t-combo>
-              <t-combo v-else-if="f.kind === 'move'" class="move-combo" :model-value="f.value" :options="moveOptions ?? []" :img-for="imgFor" @update:model-value="v => set(f, v)"></t-combo>
-              <t-text v-else-if="f.kind === 'hex'" cls="mono" :model-value="f.value" :maxlength="f.max" @update:model-value="v => set(f, v)"></t-text>
-              <input v-else-if="f.kind === 'datetime'" class="input" type="datetime-local" step="1" :value="f.value" @change="set(f, $event.target.value)">
-              <div v-else-if="f.kind === 'flags'" class="xf-chips">
-                <button v-for="o in f.options" :key="o.v" class="chip" :class="{ on: (f.value & o.v) !== 0 }" @click="toggleFlag(f, o.v)">{{ o.t }}</button>
-              </div>
-              <div v-else-if="f.kind === 'marks'" class="xf-marks">
-                <button v-for="(m, i) in f.value" :key="i" class="mark" :class="['m' + m]" :title="f.max > 1 ? 'Click: blue → pink → off' : 'Click to toggle'" @click="cycleMark(f, i)">{{ marks(f)[i] }}</button>
-              </div>
-              <div v-else-if="f.kind === 'bytes'" class="row xf-bytes">
-                <select class="input" v-model.number="byteIndex"><option v-for="(b, i) in f.value" :key="b[0]" :value="i">{{ hex(b[0]) }}</option></select>
-                <t-number :model-value="byteAt(f)[1]" :min="0" :max="255" @update:model-value="v => $emit('set', 'extra.' + byteAt(f)[0], v)"></t-number>
-              </div>
-              <div v-else class="input readonly">{{ f.value || '—' }}</div>
-              <small v-if="f.hint" class="field-hint">{{ f.hint }}</small>
             </div>
+            <img v-if="g.image" class="xf-image" :src="g.image.value" :title="g.image.hint" alt="">
           </div>
         </template>
       </div>`,

@@ -19,6 +19,7 @@ public sealed record SlotArgs(SlotRef Slot);
 public sealed record SlotDropResult(bool Placed, SaveSummary? Save);
 public sealed record MoveArgs(SlotRef From, SlotRef To, string? Mode);
 public sealed record PathArgs(string Path);
+public sealed record LibraryArgs(string? Id, bool Refresh);
 public sealed record NameArgs(string Name);
 public sealed record ListArgs(string Name, int? Version);
 public sealed record FieldArgs(string Field, System.Text.Json.JsonElement Value);

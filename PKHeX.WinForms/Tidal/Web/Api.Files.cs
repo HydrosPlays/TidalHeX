@@ -353,7 +353,14 @@ internal sealed partial class WebApi
             EReaderBerrySettings.LoadFrom(sav3);
     }
 
-    internal bool OpenSAV(SaveFile sav, string path, bool forceOpen = false)
+    /// <param name="sav">Save to load.</param>
+    /// <param name="path">Where it was loaded from.</param>
+    /// <param name="forceOpen">Load even if the version is invalid.</param>
+    /// <param name="archived">
+    /// Loaded from inside a .zip (Save Manager): <paramref name="path"/> doesn't exist on disk, so there is nothing to
+    /// back up or check for write access, and it isn't added to the recent files (startup can't reopen it).
+    /// </param>
+    internal bool OpenSAV(SaveFile sav, string path, bool forceOpen = false, bool archived = false)
     {
         if (Control.ModifierKeys == Keys.Alt)
         {
@@ -389,10 +396,12 @@ internal sealed partial class WebApi
         GameInfo.FilteredSources = new FilteredGameDataSource(sav, GameInfo.Sources, HaX);
         ResetSAVPKMEditors(sav);
 
-        TryBackupExportCheck(sav, path);
-        CheckLoadPath(path);
-
-        Settings.Startup.LoadSaveFile(path);
+        if (!archived)
+        {
+            TryBackupExportCheck(sav, path);
+            CheckLoadPath(path);
+            Settings.Startup.LoadSaveFile(path);
+        }
         if (Settings.Sounds.PlaySoundSAVLoad)
             SystemSounds.Asterisk.Play();
 

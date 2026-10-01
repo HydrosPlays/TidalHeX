@@ -27,10 +27,12 @@ the host reads file paths from `CoreWebView2WebMessageReceivedEventArgs.Addition
 | `/…` | embedded `wwwroot` files |
 | `/sprite/slot/{box}/{slot}?v={n}` | PNG of a stored Pokémon. `box = -1` is the party. Uses PKHeX sprite settings (shiny, egg, held item, legality flag when enabled). |
 | `/sprite/editor?v={n}` | PNG of the Pokémon currently in the editor |
-| `/sprite/species/{species}/{form}?shiny=0|1&gender=0|1|2&egg=0|1` | PNG for a species/form |
+| `/sprite/species/{species}/{form}?shiny=0|1&gender=0|1|2&egg=0|1&crop=0|1` | PNG for a species/form (`crop=1`: trimmed, no shiny sparkle) |
 | `/sprite/enc/{token}` | PNG for an encounter or gift search result (`token` from the search result) |
 | `/sprite/ball/{ball}` | ball icon |
 | `/sprite/item/{item}` | held-item icon |
+| `/sprite/type/{type}?v={generation}` | small type icon (move and Tera pickers) |
+| `/sprite/gem/{type}` | Tera Type gem (`99` = Stellar) |
 | `/wallpaper/{box}?v={n}` | box wallpaper image |
 
 Responses carry `Cache-Control: max-age=31536000` when the URL has `v`; the UI bumps `v` to refresh.
@@ -87,6 +89,9 @@ Responses carry `Cache-Control: max-age=31536000` when the URL has `v`; the UI b
 | `app.settings` | – | opens the classic settings dialog |
 | `app.setOption` | `{ name: 'encountersInGameOnly' \| 'giftsInGameOnly' \| 'reducedMotion', value: bool }` | `UiSettings`; PKHeX's "filter unavailable species" for the encounter / gift databases, or Startup.TidalReduceMotion (saved on exit) |
 | `app.classic` | – | restarts in classic PKHeX mode |
+| `saves.list` | `{ refresh?: bool }` | `LibraryResult`: the Save Manager's saves (the `saves` folder next to the exe, scanned at startup; `refresh` rescans, reusing unchanged files) |
+| `saves.open` | `{ id }` | `SaveSummary \| null`; a plain file opens like `file.openPath`; a save inside a .zip loads from memory (its path points inside the .zip, so export always asks where to write, and it isn't added to the recent files) |
+| `saves.openFolder` | – | opens the `saves` folder in Explorer (creates it if needed) |
 
 ### Editor (implemented in `Api.Editor`)
 `editor.get`, `editor.set { field, value }`, `editor.legality`, `editor.exportFile`, `editor.suggest { what }`. `EditorState` is defined in `Dto/EditorState.cs`.
@@ -153,9 +158,19 @@ PluginItem { id, text, tip, enabled, hasIcon, children: PluginItem[] }   // icon
 ```
 
 ```ts
+// Save Manager. Groups = sub-folders ("" = the folder itself), oldest generation first; saves by generation, then game.
+LibraryResult { folder, groups: LibraryGroup[], skipped: string[] }   // skipped: files that aren't recognized saves
+LibraryGroup  { key, name, saves: LibrarySave[] }                      // name: "switch" → "Nintendo Switch"
+LibrarySave   { id, fileName, entry?, version, game, generation, ot, tid, sid, playTime, language, languageName, started,
+                gender, money, dexCaught, size, modified, icons: string[],
+                party: { species, form, gender, shiny, egg }[], loaded, note? }   // icons: img/games/pokemon-*.png
+```
+
+```ts
 // EditorState.fields: what PKMEditor shows only for some formats (Pokérus, form argument, markings, size, contest stats,
 // battle version, ground tile, alpha/noble, dynamax, tera, hidden power type, region, HOME tracker, extra bytes...).
 FieldDto { key, section: 'overview'|'met'|'stats'|'moves'|'extras'|'trainer', group, label,
-           kind: 'bool'|'number'|'select'|'hex'|'info'|'datetime'|'flags'|'marks'|'bytes'|'move',
-           value, min, max, options?: Opt[], hint?, suggest }   // suggest: editor.suggest { what: 'field:<key>' }
+           kind: 'bool'|'number'|'select'|'hex'|'info'|'datetime'|'flags'|'marks'|'bytes'|'move'|'image',
+           value, min, max, options?: Opt[], hint?, suggest, suggestTip? }   // suggest: editor.suggest { what: 'field:<key>' }
+Opt { v, t, img? }   // img: option icon (Tera types); an 'image' field's value is an image URL shown beside its group
 ```

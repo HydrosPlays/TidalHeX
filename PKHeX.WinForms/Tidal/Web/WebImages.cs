@@ -43,6 +43,7 @@ internal sealed class WebImages(WebApi api)
             ["sprite", "bag", var pouch] => GetPouchIcon(pouch),
             ["sprite", "plugin", var id] => api.GetPluginIcon(id),
             ["sprite", "type", var type] => GetTypeIcon(ToInt(type)),
+            ["sprite", "gem", var type] => GetTeraGem(ToInt(type)),
             _ => null,
         };
         if (image is null)
@@ -90,6 +91,15 @@ internal sealed class WebImages(WebApi api)
             return null;
         var icon = Drawing.Misc.TypeSpriteUtil.GetTypeSpriteIconSmall((byte)type, SAV.Generation);
         return icon is null ? null : new Bitmap(icon); // copy: the route disposes what it returns
+    }
+
+    /// <summary> Tera Type gem (the classic editor's Tera Type picture). </summary>
+    private static Image? GetTeraGem(int type)
+    {
+        if ((uint)type > byte.MaxValue)
+            return null;
+        var gem = Drawing.Misc.TypeSpriteUtil.GetTypeSpriteGem((byte)type);
+        return gem is null ? null : new Bitmap(gem); // copy: the route disposes what it returns
     }
 
     /// <summary> Bag pouch icons (the classic editor's tab images). </summary>
@@ -272,7 +282,22 @@ internal sealed class WebImages(WebApi api)
         var shiny = GetFlag(query, "shiny") ? Shiny.Always : Shiny.Never;
         var egg = GetFlag(query, "egg");
         var gender = query.TryGetValue("gender", out var g) && byte.TryParse(g, out var value) && value <= 2 ? value : (byte)0;
-        return SpriteUtil.GetSprite(s, f, gender, 0, 0, egg, shiny, SAV.Context);
+        if (!GetFlag(query, "crop"))
+            return SpriteUtil.GetSprite(s, f, gender, 0, 0, egg, shiny, SAV.Context);
+
+        // Just the Pokémon, trimmed, for small previews (Save Manager party icons): shiny colors but no sparkle.
+        var art = egg
+            ? SpriteUtil.GetSprite(s, f, gender, 0, 0, true, Shiny.Never, SAV.Context)
+            : SpriteUtil.Spriter.GetBaseSprite(s, f, gender, 0, shiny == Shiny.Always, SAV.Context);
+        try
+        {
+            return CropToContent(art);
+        }
+        finally
+        {
+            if (!IsShared(art))
+                art.Dispose();
+        }
     }
 
     private static bool GetFlag(IReadOnlyDictionary<string, string> query, string key)

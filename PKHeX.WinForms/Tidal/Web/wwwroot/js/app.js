@@ -11,8 +11,9 @@
     { key: 'encounters', label: 'Encounters', icon: 'sparkle' },
     { key: 'gifts', label: 'Mystery Gifts', icon: 'gift' },
     { key: 'tools', label: 'Save Tools', icon: 'tools' },
+    { key: 'saves', label: 'Save Manager', icon: 'library' },
   ];
-  const TITLES = { boxes: 'Boxes', editor: 'Pokémon', encounters: 'Encounters', gifts: 'Mystery Gifts', tools: 'Save Tools', settings: 'Settings' };
+  const TITLES = { boxes: 'Boxes', editor: 'Pokémon', encounters: 'Encounters', gifts: 'Mystery Gifts', tools: 'Save Tools', settings: 'Settings', saves: 'Save Manager' };
 
   // ------------------------------------------------------------------ store
   let toastId = 1;
@@ -150,7 +151,7 @@
         if (e.ctrlKey && e.key.toLowerCase() === 'e') { e.preventDefault(); store.exportSave(); return; }
         if (e.ctrlKey && e.key === 'PageDown') { e.preventDefault(); cycle(1); return; }
         if (e.ctrlKey && e.key === 'PageUp') { e.preventDefault(); cycle(-1); return; }
-        if (e.ctrlKey && /^[1-5]$/.test(e.key)) { e.preventDefault(); store.go(TABS[+e.key - 1].key); return; }
+        if (e.ctrlKey && /^[1-6]$/.test(e.key)) { e.preventDefault(); store.go(TABS[+e.key - 1].key); return; }
         if (e.ctrlKey && e.key === 'h') { e.preventDefault(); store.go('home'); return; }
         if (e.key === 'Escape') { if (!typing || e.defaultPrevented) { e.preventDefault(); back(); } else document.activeElement.blur(); return; }
         if (typing) return;

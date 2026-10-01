@@ -1,10 +1,16 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace PKHeX.WinForms.Tidal.Web;
 
 // DTOs for the Pokémon editor (editor.get / editor.set / editorLoaded). Serialized camelCase; see API.md.
 
-internal sealed record Opt(int V, string T);
+internal sealed record Opt(int V, string T)
+{
+    /// <summary> Icon shown beside the option (e.g. type icons); most lists have none. </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Img { get; init; }
+}
 internal sealed record TypeDto(string Id, string Name);
 internal sealed record StatDto(string Key, string Name, int Base, int Iv, int Ev, int Value, bool Ht, int NatureMod)
 {
@@ -101,4 +107,6 @@ internal sealed record FieldDto(string Key, string Section, string Group, string
     public string? Hint { get; init; }
     /// <summary> Has a suggestion (editor.suggest "field:&lt;key&gt;"). </summary>
     public bool Suggest { get; init; }
+    /// <summary> Tooltip for the suggestion button (default "Suggest"). </summary>
+    public string? SuggestTip { get; init; }
 }

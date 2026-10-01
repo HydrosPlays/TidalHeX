@@ -1,7 +1,9 @@
 // Home: console-style launcher (party avatars, title band, app tiles, dock).
 window.TidalPages.home = {
   props: { store: Object },
-  data: () => ({ zone: 'tiles', sel: 0, dockSel: 0, canLeft: false, canRight: false, paging: false }),
+  // sel / dockSel: the tile or dock button last under the mouse or picked with the arrow keys (-1: none yet). Like the
+  // other screens, nothing is highlighted until the mouse is over it; kbd = the arrow keys moved, so draw the highlight.
+  data: () => ({ zone: 'tiles', sel: -1, dockSel: -1, kbd: false, canLeft: false, canRight: false, paging: false }),
   computed: {
     save() { return this.store.save; },
     party() { return (this.save?.party ?? []).filter(p => !p.empty); },
@@ -25,6 +27,7 @@ window.TidalPages.home = {
       const st = this.store;
       return [
         { icon: 'open', c: 'var(--dock-red)', tip: 'Open file', run: () => st.openFile() },
+        { icon: 'library', c: 'var(--cyan)', tip: 'Save Manager', run: () => st.go('saves') },
         { icon: 'export', c: 'var(--dock-orange)', tip: 'Export save', run: () => st.exportSave() },
         { icon: 'boxes', c: 'var(--dock-blue)', tip: 'Boxes', run: () => st.go('boxes') },
         { icon: 'shield', c: 'var(--dock-green)', tip: 'Check every Pokémon', run: () => st.call('tools.open', { id: 'VerifySaveEntities' }).catch(() => {}) },
@@ -32,12 +35,20 @@ window.TidalPages.home = {
         { icon: 'power', c: 'var(--dock-grey)', tip: 'Classic PKHeX', run: () => st.classic() },
       ];
     },
-    bandTitle() { return this.zone === 'tiles' ? this.current?.title : this.current?.tip; },
-    bandSub() { return this.zone === 'tiles' ? this.current?.sub : ''; },
+    /** Before anything is picked, the band names the loaded save. */
+    bandTitle() {
+      if (this.current) return this.zone === 'tiles' ? this.current.title : this.current.tip;
+      return this.hasSave ? this.save.game : 'TidalHeX';
+    },
+    bandSub() {
+      if (this.current) return this.zone === 'tiles' ? this.current.sub : '';
+      return this.hasSave ? `${this.save.ot} · ${this.save.pokemonCount.toLocaleString()} Pokémon` : 'Open a save to get started';
+    },
+    hasSave() { return !!(this.save?.loaded && !this.save.blank); },
   },
   watch: {
     sel() {
-      if (this.paging) return; // page() scrolls by itself
+      if (this.paging || this.sel < 0) return; // page() scrolls by itself
       this.$nextTick(() => this.$refs.tiles?.children[this.sel]?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }));
     },
     'tiles.length'() { this.$nextTick(this.updateArrows); },
@@ -59,7 +70,7 @@ window.TidalPages.home = {
       else if (t.key === 'recent') this.store.openPath(t.path);
       else this.store.go(t.key);
     },
-    hover(i) { this.zone = 'tiles'; this.sel = i; },
+    hover(i) { this.kbd = false; this.zone = 'tiles'; this.sel = i; },
     cleanUrl(src) { return window.Tidal.url.clean(src); },
     /** Edge arrows show only when there are more tiles that way. */
     updateArrows() {
@@ -91,15 +102,23 @@ window.TidalPages.home = {
       e.preventDefault();
       el.scrollBy({ left: e.deltaY, behavior: 'auto' });
     },
-    hoverDock(i) { this.zone = 'dock'; this.dockSel = i; },
+    hoverDock(i) { this.kbd = false; this.zone = 'dock'; this.dockSel = i; },
     avatar(p) { this.store.call('box.view', { slot: { box: p.box, slot: p.slot } }).catch(() => {}); },
     onKey(e) {
       const n = this.zone === 'tiles' ? this.tiles.length : this.dock.length;
       const key = this.zone === 'tiles' ? 'sel' : 'dockSel';
-      if (e.key === 'ArrowRight') { this[key] = Math.min(n - 1, this[key] + 1); e.preventDefault(); }
-      else if (e.key === 'ArrowLeft') { this[key] = Math.max(0, this[key] - 1); e.preventDefault(); }
-      else if (e.key === 'ArrowDown' && this.zone === 'tiles') { this.zone = 'dock'; e.preventDefault(); }
-      else if (e.key === 'ArrowUp' && this.zone === 'dock') { this.zone = 'tiles'; e.preventDefault(); }
+      const arrows = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'];
+      if (arrows.includes(e.key)) {
+        e.preventDefault();
+        const first = !this.kbd || this[key] < 0; // the first arrow press shows the highlight where it is
+        this.kbd = true;
+        if (this[key] < 0) this[key] = 0;
+        if (first) return;
+      }
+      if (e.key === 'ArrowRight') this[key] = Math.min(n - 1, this[key] + 1);
+      else if (e.key === 'ArrowLeft') this[key] = Math.max(0, this[key] - 1);
+      else if (e.key === 'ArrowDown' && this.zone === 'tiles') { this.zone = 'dock'; if (this.dockSel < 0) this.dockSel = 0; }
+      else if (e.key === 'ArrowUp' && this.zone === 'dock') { this.zone = 'tiles'; if (this.sel < 0) this.sel = 0; }
       else if (e.key === 'Enter' || e.key === ' ' || e.key.toLowerCase() === 'a') {
         e.preventDefault();
         if (this.zone === 'tiles') this.activate(this.current); else this.current?.run();
@@ -131,7 +150,7 @@ window.TidalPages.home = {
       <div class="tiles-wrap">
       <button class="tile-arrow left" :class="{ show: canLeft }" title="Previous" aria-label="Scroll left" @click="page(-1)"><t-icon name="back"></t-icon></button>
       <div class="tiles" ref="tiles" @scroll.passive="updateArrows" @wheel="wheel">
-        <button v-for="(t, i) in tiles" :key="t.key + (t.path || '')" class="tile" :class="{ sel: zone === 'tiles' && sel === i }"
+        <button v-for="(t, i) in tiles" :key="t.key + (t.path || '')" class="tile" :class="{ sel: kbd && zone === 'tiles' && sel === i }"
                 :style="{ '--tile-bg': t.bg }" @mouseenter="hover(i)" @click="activate(t)">
           <div v-if="t.sprite" class="art"><img class="sprite" :src="cleanUrl(t.sprite)" alt=""></div>
           <div v-else-if="t.party && t.party.length" class="art sprites"><img v-for="p in t.party" :key="p.slot" class="sprite" :src="p.sprite" alt=""></div>
@@ -144,7 +163,7 @@ window.TidalPages.home = {
 
       <div class="dock-wrap">
         <div class="dock">
-          <button v-for="(d, i) in dock" :key="d.tip" class="dock-btn" :class="{ sel: zone === 'dock' && dockSel === i }" :style="{ '--c': d.c }"
+          <button v-for="(d, i) in dock" :key="d.tip" class="dock-btn" :class="{ sel: kbd && zone === 'dock' && dockSel === i }" :style="{ '--c': d.c }"
                   @mouseenter="hoverDock(i)" @click="d.run()"><t-icon :name="d.icon"></t-icon><span class="tip">{{ d.tip }}</span></button>
         </div>
       </div>
