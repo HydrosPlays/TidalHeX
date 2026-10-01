@@ -1,9 +1,6 @@
 <p align="center">
-  <img src="PKHeX.WinForms/Tidal/Assets/logo.png" width="150" alt="TidalHeX logo">
+  <img src="TidalHeX_Logo.png" width="350" alt="TidalHeX logo">
 </p>
-
-<h1 align="center">TidalHeX</h1>
-
 <p align="center">
   A modern, console-style interface for <a href="https://github.com/kwsch/PKHeX">PKHeX</a>, the Pokémon core series save editor.
 </p>
