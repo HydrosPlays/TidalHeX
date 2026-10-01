@@ -423,7 +423,7 @@ internal sealed partial class WebApi
 
     public static UiSettings GetUiSettings() => new()
     {
-        ReducedMotion = IsReducedMotion(),
+        ReducedMotion = Settings.Startup.TidalReduceMotion,
         HideSecrets = Settings.Privacy.HideSecretDetails,
         EncountersInGameOnly = Settings.EncounterDb.FilterUnavailableSpecies,
         GiftsInGameOnly = Settings.MysteryDb.FilterUnavailableSpecies,
@@ -436,7 +436,7 @@ internal sealed partial class WebApi
     private static extern bool SystemParametersInfo(uint uiAction, uint uiParam, [MarshalAs(UnmanagedType.Bool)] out bool pvParam, uint fWinIni);
 
     /// <summary> Windows "Animation effects" setting (Accessibility → Visual effects). </summary>
-    private static bool IsReducedMotion()
+    internal static bool IsSystemReducedMotion()
     {
         try
         {

@@ -10,7 +10,7 @@ window.TidalPages.settings = {
     motion(v) {
       this.store.settings.reducedMotion = v;
       window.TidalFx.setReduced(v);
-      this.store.call('app.setSetting', { name: 'reducedMotion', value: v }).catch(() => {});
+      this.store.setOption('reducedMotion', v);
     },
   },
   template: `

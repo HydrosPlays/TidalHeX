@@ -21,6 +21,9 @@ public sealed class StartupSettings : IStartupSettings
     [LocalizedDescription("Use the TidalHeX web interface instead of the classic PKHeX window (restart required). Requires the Tidal theme.")]
     public bool TidalUI { get; set; } = true;
 
+    [LocalizedDescription("Turn off the bubbles and animations in the TidalHeX web interface.")]
+    public bool TidalReduceMotion { get; set; } = Tidal.Web.WebApi.IsSystemReducedMotion(); // follows Windows for new settings, json load preserves any choice.
+
     [LocalizedDescription("Force HaX mode on Program Launch")]
     public bool ForceHaXOnLaunch { get; set; }
 

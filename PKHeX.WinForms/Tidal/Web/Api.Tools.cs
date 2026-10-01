@@ -617,6 +617,9 @@ internal sealed partial class WebApi
                 Settings.MysteryDb.FilterUnavailableSpecies = args.Value;
                 Session.ResetGifts();
                 break;
+            case "reducedMotion":
+                Settings.Startup.TidalReduceMotion = args.Value;
+                break;
             default:
                 throw new ArgumentException($"Unknown option '{args.Name}'.");
         }

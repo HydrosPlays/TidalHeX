@@ -85,7 +85,7 @@ Responses carry `Cache-Control: max-age=31536000` when the URL has `v`; the UI b
 | `plugins.list` | – | `{ plugins: string[], items: PluginItem[] }`: commands the plugins in the `plugins` folder added to the Tools menu (hidden ones left out) |
 | `plugins.run` | `{ id }` | `bool` (clicks the plugin's menu entry, then refreshes the slots) |
 | `app.settings` | – | opens the classic settings dialog |
-| `app.setOption` | `{ name: 'encountersInGameOnly' \| 'giftsInGameOnly', value: bool }` | `UiSettings`; PKHeX's "filter unavailable species" for the encounter / gift databases (saved on exit) |
+| `app.setOption` | `{ name: 'encountersInGameOnly' \| 'giftsInGameOnly' \| 'reducedMotion', value: bool }` | `UiSettings`; PKHeX's "filter unavailable species" for the encounter / gift databases, or Startup.TidalReduceMotion (saved on exit) |
 | `app.classic` | – | restarts in classic PKHeX mode |
 
 ### Editor (implemented in `Api.Editor`)
@@ -115,7 +115,6 @@ ToolInfo    { id, name, category, description }
 | Method | Args | Result |
 |---|---|---|
 | `app.ready` | – | (no reply needed) page finished booting; host may close the splash |
-| `app.setSetting` | `{ name: 'reducedMotion', value }` | `bool` (persisted in PKHeX settings) |
 | `list.get` | `{ name: 'metLocations' \| 'eggLocations', version }` | locations valid for that origin game |
 
 ### Editor

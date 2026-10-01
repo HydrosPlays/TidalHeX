@@ -65,7 +65,12 @@
     async openFile() { await this.call('file.open').catch(() => null); },
     async openPath(path) { await this.call('file.openPath', { path }).catch(() => null); },
     async exportSave() { await this.call('file.exportSave').catch(() => null); },
-    async settingsDialog() { await this.call('app.settings').catch(() => null); },
+    async settingsDialog() {
+      const s = await this.call('app.settings').catch(() => null);
+      if (!s) return;
+      this.settings = s;
+      fx.setReduced(s.reducedMotion);
+    },
     /** Changes one of PKHeX's settings exposed on the pages; returns false if it failed. */
     async setOption(name, value) {
       const s = await this.call('app.setOption', { name, value }).catch(() => null);
