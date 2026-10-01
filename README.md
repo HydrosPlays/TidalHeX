@@ -9,9 +9,10 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPLv3">
-  <img src="https://img.shields.io/badge/based%20on-PKHeX-1a8fe6.svg" alt="Based on PKHeX">
+  <img src="https://img.shields.io/badge/License-GPLv3-green?style=flat" alt="License: GPLv3">
+  <img src="https://img.shields.io/badge/Based%20On-PKHeX-red?style=flat" alt="Based on PKHeX">
   <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078d4.svg" alt="Platform: Windows 10 | 11">
+  <img src="https://img.shields.io/badge/Version-0.3.1%20Beta-orange?style=flat" alt="Version: 0.3.1 Beta">
 </p>
 
 ![TidalHeX home screen](.github/screenshots/home.webp)
