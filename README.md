@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/License-GPLv3-green?style=flat" alt="License: GPLv3">
   <img src="https://img.shields.io/badge/Based%20On-PKHeX-red?style=flat" alt="Based on PKHeX">
   <img src="https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-blue?style=flat" alt="Platform: Windows 10 | 11">
-  <img src="https://img.shields.io/badge/Version-0.3.1%20Beta-orange?style=flat" alt="Version: 0.3.1 Beta">
+  <img src="https://img.shields.io/badge/Version-v0.4.0beta-orange" alt="Version: 0.4.0 Beta">
 </p>
 
 ![TidalHeX home screen](.github/screenshots/home.webp)
