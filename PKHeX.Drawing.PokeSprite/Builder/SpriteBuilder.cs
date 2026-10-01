@@ -119,6 +119,24 @@ public abstract class SpriteBuilder : ISpriteBuilder<Bitmap>
         return GetSprite(baseImage, species, heldItem, isEgg, shiny, context);
     }
 
+    /// <summary>
+    /// Gets the Pokémon's art alone (shiny colors included), without the egg, held item or shiny-sparkle overlays.
+    /// </summary>
+    /// <remarks>TidalHeX: used for round party avatars. Always returns a new image that the caller owns.</remarks>
+    public Bitmap GetBaseSprite(ushort species, byte form, byte gender, uint formarg, bool shiny, EntityContext context = EntityContext.None)
+    {
+        if (species == 0)
+            return new Bitmap(None);
+
+        if (context == EntityContext.Gen3 && species == (int)Species.Deoxys)
+            form = GetDeoxysForm(Version);
+        else if (context == EntityContext.Gen4 && species == (int)Species.Arceus)
+            form = GetArceusForm4(form);
+
+        var image = GetBaseImage(species, form, gender, formarg, shiny, context);
+        return ReferenceEquals(image, Unknown) ? new Bitmap(image) : image;
+    }
+
     public Bitmap GetSprite(Bitmap baseSprite, ushort species, int heldItem, bool isEgg, Shiny shiny, EntityContext context = EntityContext.None)
     {
         if (isEgg)

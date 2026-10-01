@@ -15,6 +15,12 @@ public sealed class StartupSettings : IStartupSettings
     [LocalizedDescription("Use the Dark color mode for the application on startup.")]
     public bool DarkMode { get; set; } = Application.SystemColorMode == SystemColorMode.Dark; // auto-detect for new settings, json load preserves any choice.
 
+    [LocalizedDescription("Use the TidalHeX ocean theme for all windows (restart required). Overrides DarkMode when enabled.")]
+    public bool TidalTheme { get; set; } = true;
+
+    [LocalizedDescription("Use the TidalHeX web interface instead of the classic PKHeX window (restart required). Requires the Tidal theme.")]
+    public bool TidalUI { get; set; } = true;
+
     [LocalizedDescription("Force HaX mode on Program Launch")]
     public bool ForceHaXOnLaunch { get; set; }
 

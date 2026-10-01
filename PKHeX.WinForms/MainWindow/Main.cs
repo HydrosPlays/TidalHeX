@@ -37,6 +37,74 @@ public partial class Main : Form
         }
 #endif
         FormInitializeSecond();
+        AddTidalViewMenu();
+        if (Tidal.TidalTheme.Enabled)
+            InitializeTidal();
+    }
+
+    /// <summary> Set when switching views, which already asked about unsaved changes. </summary>
+    private bool SkipClosePrompt;
+
+    /// <summary>
+    /// Menu bar entry that restarts in the TidalHeX interface (the Startup setting alone would need a manual restart).
+    /// </summary>
+    private void AddTidalViewMenu()
+    {
+        var item = new ToolStripMenuItem("TidalHeX view")
+        {
+            Name = "Menu_TidalView",
+            ToolTipText = "Restart in the TidalHeX interface",
+        };
+        item.Click += (_, _) => SwitchToTidalView();
+        menuStrip1.Items.Add(item);
+    }
+
+    private void SwitchToTidalView()
+    {
+        if (C_SAV.SAV.State.Edited || PKME_Tabs.PKMIsUnsaved)
+        {
+            var prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, MsgProgramCloseUnsaved, "Switch to the TidalHeX view anyway?");
+            if (prompt != DialogResult.Yes)
+                return;
+        }
+
+        Settings.Startup.TidalTheme = true; // the web interface requires the theme
+        Settings.Startup.TidalUI = true;
+        try
+        {
+            // Save before restarting: the closing handler saves asynchronously and could lose the race with the restart.
+            Task.Run(() => PKHeXSettings.SaveSettings(Program.PathConfig, Settings)).Wait(TimeSpan.FromSeconds(10));
+        }
+        catch (Exception ex)
+        {
+            Settings.Startup.TidalUI = false;
+            WinFormsUtil.Error("Couldn't save the settings, so the view wasn't switched.", ex.Message);
+            return;
+        }
+        SkipClosePrompt = true;
+        Application.Restart();
+    }
+
+    /// <summary>
+    /// Adds the Tidal hint bar and themes the main window before it is first shown.
+    /// </summary>
+    private void InitializeTidal()
+    {
+        var footer = new Tidal.TidalFooter
+        {
+            LeftText = "Drop a save or Pokémon file anywhere",
+            AllowDrop = true,
+        };
+        footer.DragEnter += Main_DragEnter;
+        footer.DragDrop += Main_DragDrop;
+        footer.SetHints(
+            new("Ctrl+O", "Open", () => MainMenuOpen(this, EventArgs.Empty)),
+            new("Ctrl+E", "Export Save", () => ClickExportSAV(this, EventArgs.Empty)),
+            new("Ctrl+N", "Encounters", () => Menu_EncDatabase_Click(this, EventArgs.Empty)),
+            new("Ctrl+G", "Gifts", () => MainMenuMysteryDB(this, EventArgs.Empty)));
+        ClientSize = ClientSize with { Height = ClientSize.Height + footer.Height };
+        Controls.Add(footer);
+        Tidal.TidalTheme.Apply(this);
     }
 
     #region Important Variables
@@ -289,7 +357,7 @@ public partial class Main : Form
 
     private void Menu_EncDatabase_Click(object sender, EventArgs e)
     {
-        if (this.OpenWindowExists<SAV_Encounters>())
+        if (this.OpenWindowExists<Tidal.EncounterBrowser>())
             return;
 
         var db = new TrainerDatabase();
@@ -304,13 +372,13 @@ public partial class Main : Form
             foreach (var f in pk)
                 db.RegisterCopy(f);
         });
-        new SAV_Encounters(PKME_Tabs, db).Show();
+        new Tidal.EncounterBrowser(PKME_Tabs, db).Show();
     }
 
     private void MainMenuMysteryDB(object sender, EventArgs e)
     {
-        if (!this.OpenWindowExists<SAV_MysteryGiftDB>())
-            new SAV_MysteryGiftDB(PKME_Tabs, C_SAV).Show();
+        if (!this.OpenWindowExists<Tidal.MysteryGiftBrowser>())
+            new Tidal.MysteryGiftBrowser(PKME_Tabs, C_SAV).Show();
     }
 
     private static void ClosePopups()
@@ -836,7 +904,7 @@ public partial class Main : Form
         var v = Program.CurrentVersion;
         string version = $"{2000+v.Major:00}{v.Minor:00}{v.Build:00}";
 #endif
-        return $"PKH{(HaX ? "a" : "e")}X ({version})";
+        return $"Tidal H{(HaX ? "a" : "e")}X ({version})";
     }
 
     private static string GetProgramTitle(SaveFile sav)
@@ -1350,7 +1418,7 @@ public partial class Main : Form
     {
         try
         {
-            if (C_SAV.SAV.State.Edited || PKME_Tabs.PKMIsUnsaved)
+            if (!SkipClosePrompt && (C_SAV.SAV.State.Edited || PKME_Tabs.PKMIsUnsaved))
             {
                 var prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, MsgProgramCloseUnsaved, MsgProgramCloseConfirm);
                 if (prompt != DialogResult.Yes)

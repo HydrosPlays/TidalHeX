@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TidalHeX</title>
+<link rel="stylesheet" href="css/tidal.css">
+</head>
+<body>
+<div id="backdrop" class="backdrop"></div>
+
+<div id="boot" class="boot">
+  <div class="center">
+    <img src="img/logo.png" alt="">
+    <h1>TidalHeX</h1>
+  </div>
+  <div class="foot">
+    <span></span>
+    <span></span>
+    <div style="text-align:right">Loading your save…<div class="dots"><i></i><i></i><i></i></div></div>
+  </div>
+</div>
+
+<div id="app" v-cloak></div>
+
+<script src="vendor/vue.global.prod.js"></script>
+<script src="vendor/anime.umd.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/bridge.js"></script>
+<script>
+  // Outside the app (plain browser), load the development mock of the host.
+  if (!(window.chrome && window.chrome.webview)) document.write('<script src="mock/mock.js"><\/script>');
+</script>
+<script src="js/fx.js"></script>
+<script src="js/components.js"></script>
+<script>window.TidalPages = {};</script>
+<script src="js/pages/home.js"></script>
+<script src="js/pages/boxes.js"></script>
+<script src="js/pages/editor.js"></script>
+<script src="js/pages/encounters.js"></script>
+<script src="js/pages/gifts.js"></script>
+<script src="js/pages/tools.js"></script>
+<script src="js/pages/settings.js"></script>
+<script>window.TidalTools = {};</script>
+<script src="js/tools/items.js"></script>
+<script src="js/tools/trainer.js"></script>
+<script src="js/tools/boxlayout.js"></script>
+<script src="js/tools/pokedex.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

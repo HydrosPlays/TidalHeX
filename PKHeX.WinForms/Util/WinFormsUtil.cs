@@ -124,6 +124,14 @@ public static class WinFormsUtil
 
     #region Message Displays
     /// <summary>
+    /// TidalHeX: shows a message inside the web interface instead of a message box.
+    /// Returns null when it can't (e.g. a classic window is in front), and the message box is shown as usual.
+    /// </summary>
+    internal static Func<MessageKind, MessageBoxButtons, string, string?, DialogResult?>? MessageHook;
+
+    internal enum MessageKind { Error, Alert, Prompt }
+
+    /// <summary>
     /// Displays a dialog showing the details of an error.
     /// </summary>
     /// <param name="friendlyMessage">User-friendly message about the error.</param>
@@ -132,6 +140,8 @@ public static class WinFormsUtil
     internal static DialogResult Error(string friendlyMessage, Exception exception)
     {
         Exclamation();
+        if (MessageHook?.Invoke(MessageKind.Error, MessageBoxButtons.OK, friendlyMessage, exception.ToString()) is { } result)
+            return result;
         return ErrorWindow.ShowErrorDialog(friendlyMessage, exception, true);
     }
 
@@ -144,6 +154,8 @@ public static class WinFormsUtil
     {
         Hand();
         string msg = string.Join(Environment.NewLine + Environment.NewLine, lines);
+        if (MessageHook?.Invoke(MessageKind.Error, MessageBoxButtons.OK, msg, null) is { } result)
+            return result;
         return MessageBox.Show(msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
     }
 
@@ -151,6 +163,8 @@ public static class WinFormsUtil
     {
         Asterisk();
         string msg = string.Join(Environment.NewLine + Environment.NewLine, lines);
+        if (MessageHook?.Invoke(MessageKind.Alert, MessageBoxButtons.OK, msg, null) is { } result)
+            return result;
         return MessageBox.Show(msg, "Alert", MessageBoxButtons.OK, Quiet ? MessageBoxIcon.None : MessageBoxIcon.Information);
     }
 
@@ -158,6 +172,8 @@ public static class WinFormsUtil
     {
         Asterisk();
         string msg = string.Join(Environment.NewLine + Environment.NewLine, lines);
+        if (MessageHook?.Invoke(MessageKind.Prompt, btn, msg, null) is { } result)
+            return result;
         return MessageBox.Show(msg, "Prompt", btn, MessageBoxIcon.Question);
     }
     #endregion

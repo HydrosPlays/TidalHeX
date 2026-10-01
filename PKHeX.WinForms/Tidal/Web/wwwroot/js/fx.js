@@ -1,0 +1,245 @@
+// TidalHeX visual effects: backdrop decorations + anime.js helpers.
+window.TidalFx = (() => {
+  const A = window.anime;
+  let reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const running = [];
+
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(svgNS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+
+  // ---------------------------------------------------------------- backdrop
+  // CPU budget: ambient motion only runs on the home and boot scenes, and only while the window is visible and
+  // focused. On pages the backdrop sits behind frosted (backdrop-filter) panels, where any movement forces every
+  // panel's blur to be recomputed each frame for motion nobody can see, so pages get a still backdrop.
+  let host, svg, canvas, mode = 'home';
+  let bubbles = null; // { start(), stop(), clear() }
+
+  function mount(container) {
+    host = container;
+    host.innerHTML = '<div class="sea"></div><div class="shine"></div><div class="grid"></div>';
+    svg = el('svg', { preserveAspectRatio: 'none' });
+    host.appendChild(svg);
+    canvas = document.createElement('canvas');
+    host.appendChild(canvas);
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => draw(mode, true), 120); });
+    bubbles = createBubbles();
+    document.addEventListener('visibilitychange', updateMotion);
+    window.addEventListener('focus', updateMotion);
+    window.addEventListener('blur', updateMotion);
+  }
+
+  /** True when ambient motion is worth its CPU: animated scene, motion allowed, window visible and focused. */
+  function motionWanted() {
+    return !reduced && !!A && mode !== 'page' && !document.hidden && document.hasFocus();
+  }
+
+  function updateMotion() {
+    document.documentElement.classList.toggle('inactive', document.hidden || !document.hasFocus());
+    const on = motionWanted();
+    for (const a of running) { try { if (on) a.play(); else a.pause(); } catch { /* */ } }
+    host?.classList.toggle('moving', on); // CSS drift of the shine
+    if (!bubbles) return;
+    if (on) bubbles.start();
+    else { bubbles.stop(); if (mode === 'page' || reduced) bubbles.clear(); }
+  }
+
+  function clearLoops() {
+    while (running.length) { try { running.pop().pause(); } catch { /* */ } }
+  }
+
+  /** Draws decorations for a scene: 'home' (rings), 'page' (brackets + circuits), 'boot'. */
+  function draw(next, force = false) {
+    if (next === mode && !force && svg?.childElementCount) return; // page → page: same backdrop, don't rebuild it
+    mode = next;
+    if (!svg) return;
+    clearLoops();
+    host.querySelectorAll(':scope > .arc').forEach(a => a.remove());
+    const w = window.innerWidth, h = window.innerHeight;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.innerHTML = '';
+    const defs = el('defs', {}, svg);
+    const glow = el('filter', { id: 'glow', x: '-20%', y: '-20%', width: '140%', height: '140%' }, defs);
+    el('feGaussianBlur', { stdDeviation: '3', result: 'b' }, glow);
+    const merge = el('feMerge', {}, glow);
+    el('feMergeNode', { in: 'b' }, merge); el('feMergeNode', { in: 'SourceGraphic' }, merge);
+
+    if (mode === 'home') drawRings(w * 0.5, h * 0.66, Math.max(w, h) * 0.12, 7, 0.16);
+    else drawRings(w * 0.5, h * 0.52, Math.min(w, h) * 0.2, 4, 0.07);
+    if (mode !== 'home') { drawBrackets(w, h); drawCircuits(w, h, mode === 'boot' ? 1 : 0.55); }
+    else drawCircuits(w, h, 0.35);
+    if (mode === 'page') bubbles?.clear();
+    updateMotion();
+  }
+
+  /** Loops are only created for animated scenes; updateMotion() pauses them while the window is inactive. */
+  const animated = () => !reduced && !!A && mode !== 'page';
+
+  function drawRings(cx, cy, r0, count, alpha) {
+    const g = el('g', { class: 'deco rings', opacity: alpha * 6 }, svg);
+    for (let i = 0; i < count; i++) {
+      const r = r0 * (1 + i * 0.62);
+      el('circle', { cx, cy, r, fill: 'none', stroke: '#ffffff', 'stroke-opacity': Math.max(0.05, alpha - i * 0.015), 'stroke-width': i % 3 === 0 ? 16 : 3 }, g);
+    }
+    // A few rotating dashed arcs for motion. Each is its own layer spun by a CSS animation: the compositor rotates
+    // it without repainting (rotating them inside the backdrop SVG repainted most of the screen every frame).
+    for (let i = 0; i < 3; i++) {
+      const r = r0 * (1.3 + i * 1.1), size = 2 * r + 4;
+      const layer = el('svg', { class: 'arc' + (i % 2 ? ' ccw' : ''), width: size, height: size, viewBox: `0 0 ${size} ${size}` });
+      Object.assign(layer.style, { left: `${cx - size / 2}px`, top: `${cy - size / 2}px`, opacity: alpha * 6, animationDuration: `${60 + i * 20}s` });
+      el('circle', { cx: size / 2, cy: size / 2, r, fill: 'none', stroke: '#bff8ff', 'stroke-opacity': 0.28, 'stroke-width': 2, 'stroke-dasharray': `${r * 0.6} ${r * 5}`, 'stroke-linecap': 'round' }, layer);
+      host.insertBefore(layer, canvas);
+    }
+  }
+
+  function drawBrackets(w, h) {
+    const g = el('g', { class: 'deco brackets' }, svg);
+    const side = (flip) => {
+      const x0 = flip ? w : 0, s = flip ? -1 : 1;
+      const inset = Math.max(90, w * 0.1), bulge = Math.max(46, w * 0.045);
+      const top = h * 0.13, bottom = h * 0.87;
+      const d = `M ${x0 + s * (inset - 30)} -10 L ${x0 + s * inset} ${top} Q ${x0 + s * (inset - bulge)} ${h / 2} ${x0 + s * inset} ${bottom} L ${x0 + s * (inset - 30)} ${h + 10}`;
+      // lighter band outside the frame
+      el('path', { d: `${d} L ${x0} ${h + 10} L ${x0} -10 Z`, fill: '#bff8ff', 'fill-opacity': 0.09 }, g);
+      el('path', { d, fill: 'none', stroke: '#7ef4ff', 'stroke-width': 3, 'stroke-opacity': 0.85, filter: 'url(#glow)' }, g);
+      el('path', { d: `M ${x0 + s * (inset - 18)} ${top + 40} Q ${x0 + s * (inset - bulge - 16)} ${h / 2} ${x0 + s * (inset - 18)} ${bottom - 40}`, fill: 'none', stroke: '#ffffff', 'stroke-width': 1.5, 'stroke-opacity': 0.35 }, g);
+    };
+    side(false); side(true);
+  }
+
+  function drawCircuits(w, h, alpha) {
+    const g = el('g', { class: 'deco circuits', opacity: alpha }, svg);
+    const lines = [
+      [[0, 0.2], [0.07, 0.2], [0.1, 0.16], [0.3, 0.16]],
+      [[0.47, 0.215], [0.75, 0.215], [0.79, 0.28], [0.95, 0.28]],
+      [[0.54, 0.35], [0.56, 0.31], [0.87, 0.31]],
+      [[0.28, 0.49], [0.74, 0.49]],
+      [[0, 0.71], [0.34, 0.71]],
+      [[1, 0.82], [0.9, 0.82], [0.86, 0.9], [0.66, 0.9]],
+    ];
+    lines.forEach((pts, i) => {
+      const d = pts.map((p, j) => `${j ? 'L' : 'M'} ${p[0] * w} ${p[1] * h}`).join(' ');
+      el('path', { d, fill: 'none', stroke: '#ffffff', 'stroke-opacity': 0.45, 'stroke-width': 1.5 }, g);
+      // A travelling light pulse along each line. No blur filter: a filtered path is re-rasterized every frame,
+      // a soft wide stroke under a bright thin one looks the same for a fraction of the cost.
+      if (!animated()) return;
+      for (const [width, opacity] of [[7, 0.25], [2.5, 1]]) {
+        const pulse = el('path', { d, fill: 'none', stroke: '#e6fdff', 'stroke-opacity': opacity, 'stroke-width': width, 'stroke-linecap': 'round', 'stroke-dasharray': '40 4000', 'stroke-dashoffset': 40 }, g);
+        running.push(A.animate(pulse, { strokeDashoffset: { from: 40, to: -4000 }, duration: 9000 + i * 1300, delay: i * 900, loop: true, ease: 'linear' }));
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------- bubbles
+  /** Rising bubbles on a canvas, capped at 30 fps (high-refresh monitors would otherwise redraw 120–144×/s). */
+  function createBubbles() {
+    const ctx = canvas.getContext('2d');
+    let list = [], W = 0, H = 0, dpr = 1, frame = 0, last = 0;
+    const FRAME_MS = 1000 / 30;
+    const resize = () => {
+      dpr = window.devicePixelRatio || 1; W = window.innerWidth; H = window.innerHeight;
+      canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize(); window.addEventListener('resize', resize);
+    const spawn = (y) => ({ x: Math.random() * W, y: y ?? H + 20, r: 1.5 + Math.random() * 5, v: 0.25 + Math.random() * 0.6, p: Math.random() * 6.28, a: 0.15 + Math.random() * 0.3 });
+    for (let i = 0; i < 24; i++) list.push(spawn(Math.random() * H));
+    const tick = (now) => {
+      frame = requestAnimationFrame(tick);
+      const elapsed = now - last;
+      if (elapsed < FRAME_MS) return;
+      const step = Math.min(3, elapsed / (1000 / 60)); // keep the speed of the original 60 fps motion
+      last = now;
+      ctx.clearRect(0, 0, W, H);
+      for (const b of list) {
+        b.y -= b.v * step; b.p += 0.02 * step; const x = b.x + Math.sin(b.p) * 6;
+        ctx.beginPath(); ctx.arc(x, b.y, b.r, 0, 6.283);
+        ctx.strokeStyle = `rgba(255,255,255,${b.a})`; ctx.lineWidth = 1.2; ctx.stroke();
+        ctx.beginPath(); ctx.arc(x - b.r * 0.35, b.y - b.r * 0.35, b.r * 0.25, 0, 6.283);
+        ctx.fillStyle = `rgba(255,255,255,${b.a + 0.2})`; ctx.fill();
+      }
+      list = list.map(b => (b.y < -20 ? spawn() : b));
+    };
+    return {
+      start() { if (!frame) { last = 0; frame = requestAnimationFrame(tick); } },
+      stop() { if (frame) { cancelAnimationFrame(frame); frame = 0; } },
+      clear() { ctx.clearRect(0, 0, W, H); },
+    };
+  }
+
+  // ---------------------------------------------------------------- UI motion helpers
+  const ok = () => A && !reduced;
+
+  /**
+   * Runs a CSS keyframe animation once. CSS instead of anime.js for entrances: `backwards` fill applies the start
+   * state during the stagger delay (JS tweens only did so once the delay elapsed, so items flashed in at full
+   * opacity first), it runs on the compositor, and afterwards the element's own CSS transform applies again.
+   */
+  function playCss(el, name, duration, delay, vars) {
+    for (const [k, v] of Object.entries(vars)) el.style.setProperty(k, v);
+    el.style.animation = `${name} ${duration}ms cubic-bezier(.16, 1, .3, 1) ${delay}ms backwards`;
+    const done = e => {
+      if (e.target !== el || e.animationName !== name) return; // child animations bubble up too
+      el.style.animation = '';
+      el.removeEventListener('animationend', done);
+    };
+    el.addEventListener('animationend', done);
+  }
+
+  function enter(targets, opts = {}) {
+    if (!ok()) return;
+    const list = typeof targets === 'string' ? document.querySelectorAll(targets) : targets;
+    if (!list || (list.length === 0)) return;
+    const stagger = opts.stagger ?? 45, start = opts.delay ?? 0;
+    const vars = { '--enter-y': `${opts.y ?? 18}px`, '--enter-s': `${opts.scale ?? 0.98}` };
+    Array.from(list).forEach((e, i) => playCss(e, 'tidal-enter', opts.duration ?? 620, start + i * stagger, vars));
+  }
+
+  /**
+   * Page entrance: a short slide only. Fading the page root would make it a "backdrop root", so every frosted panel
+   * inside would lose its blur during the fade and snap back at the end (the flicker); contents fade via enter().
+   */
+  function page(elm, dir = 1) {
+    if (!ok() || !elm) return;
+    playCss(elm, 'tidal-page', 340, 0, { '--enter-x': `${22 * dir}px` });
+  }
+
+  function pop(elm) {
+    if (!ok() || !elm) return;
+    A.animate(elm, { scale: [{ to: 1.12, duration: 140 }, { to: 1, duration: 420 }], ease: 'outElastic(1, .5)' });
+  }
+
+  function bounce(elm) {
+    if (!ok() || !elm) return;
+    A.animate(elm, { y: [{ to: -12, duration: 180, ease: 'outQuad' }, { to: 0, duration: 520, ease: 'outBounce' }] });
+  }
+
+  function title(elm) {
+    if (!ok() || !elm || !A.splitText) return;
+    try {
+      const { chars } = A.splitText(elm, { chars: true });
+      A.animate(chars, { opacity: { from: 0 }, y: { from: 10 }, duration: 480, delay: A.stagger(18), ease: 'outExpo' });
+    } catch { /* ignore */ }
+  }
+
+  function slideTo(elm, props) {
+    if (!elm) return;
+    if (!ok()) { Object.assign(elm.style, Object.fromEntries(Object.entries(props).map(([k, v]) => [k, typeof v === 'number' ? v + 'px' : v]))); return; }
+    A.animate(elm, { ...props, duration: 520, ease: A.createSpring ? A.createSpring({ stiffness: 170, damping: 18 }) : 'outExpo' });
+  }
+
+  function count(elm, to, from = 0) {
+    if (!elm) return;
+    if (!ok()) { elm.textContent = to.toLocaleString(); return; }
+    const o = { v: from };
+    A.animate(o, { v: to, duration: 900, ease: 'outExpo', onUpdate: () => { elm.textContent = Math.round(o.v).toLocaleString(); } });
+  }
+
+  function setReduced(v) { reduced = !!v; document.documentElement.classList.toggle('reduced', reduced); draw(mode, true); if (reduced) bubbles?.clear(); }
+
+  return { mount, draw, enter, page, pop, bounce, title, slideTo, count, setReduced, get reduced() { return reduced; } };
+})();

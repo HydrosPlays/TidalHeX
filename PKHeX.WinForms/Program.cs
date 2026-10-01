@@ -37,8 +37,16 @@ internal static class Program
         Application.SetCompatibleTextRenderingDefault(false);
         Settings = PKHeXSettings.GetSettings(PathConfig);
 
-        if (Settings.Startup.DarkMode)
+        if (Settings.Startup.TidalTheme)
+        {
+            // Tidal is a dark theme; PKHeX's dark-mode color choices (warnings, valid fields) read well on it.
             Application.SetColorMode(SystemColorMode.Dark);
+            Tidal.TidalTheme.Initialize();
+        }
+        else if (Settings.Startup.DarkMode)
+        {
+            Application.SetColorMode(SystemColorMode.Dark);
+        }
         if (Settings.Startup.HighDpiText)
             Application.SetHighDpiMode(HighDpiMode.DpiUnawareGdiScaled);
     }
@@ -70,6 +78,16 @@ internal static class Program
         var startup = StartupUtil.GetStartup(args, settings);
         var init = StartupUtil.FormLoadInitialActions(args, settings, CurrentVersion);
         HaX = init.HaX;
+
+        if (settings.Startup is { TidalTheme: true, TidalUI: true })
+        {
+            // TidalHeX web interface replaces the classic main window (plugins are not loaded in this mode).
+            var host = new Tidal.Web.TidalWebHost(startup, init);
+            host.Ready += (_, _) => splash?.BeginInvoke(splash.ForceClose);
+            Application.Run(host);
+            return;
+        }
+
         var main = new Main();
 
         // Close splash when Main is ready to display, then perform startup animation.
@@ -111,7 +129,7 @@ internal static class Program
     }
 
 #if !DEBUG
-    private static void Error(string msg) => MessageBox.Show(msg, "PKHeX Error", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+    private static void Error(string msg) => MessageBox.Show(msg, "TidalHeX Error", MessageBoxButtons.OK, MessageBoxIcon.Stop);
 
     private static void UIThreadException(object sender, ThreadExceptionEventArgs t)
     {

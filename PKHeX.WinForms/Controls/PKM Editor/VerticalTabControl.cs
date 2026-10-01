@@ -22,12 +22,31 @@ public class VerticalTabControl : TabControl
     protected override void OnPaint(PaintEventArgs e)
     {
         var g = e.Graphics;
+        if (Tidal.TidalTheme.Enabled)
+        {
+            PaintTidal(g, null);
+            return;
+        }
 
         using var bgBrush = new SolidBrush(BackColor);
         g.FillRectangle(bgBrush, ClientRectangle);
 
         for (int i = 0; i < TabCount; i++)
             DrawTab(g, TabPages[i], i);
+    }
+
+    /// <summary>
+    /// Tidal look: tabs as a settings-style side menu with a highlighted selection.
+    /// </summary>
+    protected void PaintTidal(Graphics g, Color[]? pips)
+    {
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        g.Clear(Tidal.TidalPalette.Strip);
+        for (int i = 0; i < TabCount; i++)
+        {
+            Color? pip = pips is not null && i < pips.Length ? pips[i] : Tidal.TidalPalette.Accent;
+            Tidal.TidalTheme.DrawTab(g, this, TabPages[i], GetTabRect(i), i == SelectedIndex, Alignment, pip);
+        }
     }
 
     private void DrawTab(Graphics g, TabPage page, int index)
@@ -78,6 +97,11 @@ public sealed class VerticalTabControlEntityEditor : VerticalTabControl
     protected override void OnPaint(PaintEventArgs e)
     {
         var g = e.Graphics;
+        if (Tidal.TidalTheme.Enabled)
+        {
+            PaintTidal(g, SelectedTags);
+            return;
+        }
 
         // Fill background
         using (var bgBrush = new SolidBrush(BackColor))

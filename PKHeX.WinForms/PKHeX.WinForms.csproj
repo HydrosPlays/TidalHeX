@@ -14,8 +14,8 @@
   <PropertyGroup>
     <PackageId>PKHeX</PackageId>
     <AssemblyName>PKHeX</AssemblyName>
-    <Description>Pokémon Save Editor</Description>
-    <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
+    <Description>TidalHeX - Pokémon Save Editor (based on PKHeX)</Description>
+    <ApplicationIcon>Tidal\Assets\TidalHeX.ico</ApplicationIcon>
     <StartupObject>PKHeX.WinForms.Program</StartupObject>
     <RootNamespace>PKHeX.WinForms</RootNamespace>
   </PropertyGroup>
@@ -36,6 +36,24 @@
     <ProjectReference Include="..\PKHeX.Drawing.PokeSprite\PKHeX.Drawing.PokeSprite.csproj" />
     <ProjectReference Include="..\PKHeX.Drawing\PKHeX.Drawing.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Tidal\Assets\logo.png" LogicalName="TidalHeX.logo.png" />
+    <EmbeddedResource Include="Tidal\Assets\TidalHeX.ico" LogicalName="TidalHeX.icon.ico" />
+  </ItemGroup>
+
+  <!-- TidalHeX web UI: the page is served from embedded resources (single-file publish); mock data is dev-only. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+    <EmbeddedResource Include="Tidal\Web\wwwroot\**\*" Exclude="Tidal\Web\wwwroot\mock\**" LogicalName="tidalweb/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- The WebView2 package always references its WPF control, which conflicts with WinForms' WindowsBase (MSB3277); only WinForms is used. -->
+  <Target Name="TidalRemoveWebView2Wpf" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
