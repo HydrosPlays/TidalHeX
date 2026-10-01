@@ -62,8 +62,8 @@ window.TidalPages.saves = {
         this.busy = null;
       }
     },
-    text(s, g) { return `${s.game} ${s.ot} ${s.tid} ${s.language} ${s.languageName} ${s.fileName} ${s.entry ?? ''} ${g.name} ${g.key} gen ${s.generation}`.toLowerCase(); },
-    file(s) { return s.entry ? `${s.fileName} › ${s.entry}` : s.fileName; },
+    text(s, g) { return `${s.game} ${s.ot} ${s.tid} ${s.language} ${s.languageName} ${s.folder} ${s.fileName} ${s.entry ?? ''} ${g.name} ${g.key} gen ${s.generation}`.toLowerCase(); },
+    file(s) { return [s.folder, s.fileName, s.entry].filter(Boolean).join(' › '); },
     date(s) { return s.modified ? new Date(s.modified).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }) : ''; },
     /** "2024-03-02" as a local date (new Date() would read it as UTC midnight and can show the day before). */
     day(iso) { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }); },

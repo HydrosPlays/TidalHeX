@@ -15,6 +15,9 @@ internal sealed partial class WebApi
     private readonly SaveLibrary Library = new();
     private LibraryScan? LastScan;
 
+    /// <summary> While the Save Manager opens a save: names that may tell a Gen 1-3 save's game and language. </summary>
+    private IReadOnlyList<string>? LibraryHints;
+
     private void RegisterSaves()
     {
         Bridge.RegisterAsync("saves.list", c => ListLibrary(c.Get<LibraryArgs>()));
@@ -59,9 +62,10 @@ internal sealed partial class WebApi
         {
             Id = z.Id,
             FileName = z.FileName,
+            Folder = z.SubFolder,
             Entry = z.Entry,
             Version = (int)z.Version,
-            Game = z.Note is null ? GameInfo.GetVersionName(z.Version) : "Colosseum / XD",
+            Game = z.Note is null ? GetGameName(z.Version, z.Language) : "Colosseum / XD",
             Generation = z.Generation,
             Ot = z.Ot,
             Tid = z.Tid,
@@ -75,7 +79,7 @@ internal sealed partial class WebApi
             DexCaught = z.DexCaught,
             Size = z.Size,
             Modified = z.Modified.ToString("s"),
-            Icons = GetGameIcons(z.Version).Select(n => $"img/games/pokemon-{n}.png").ToList(),
+            Icons = GetGameIcons(z.Version, z.Language).Select(n => $"img/games/pokemon-{n}.png").ToList(),
             Party = z.Party,
             Loaded = string.Equals(path, current, StringComparison.OrdinalIgnoreCase),
             Note = z.Note,
@@ -93,9 +97,20 @@ internal sealed partial class WebApi
             Warn("That save isn't in the saves folder anymore. Refresh the list to see what's there now.");
             return null;
         }
-        if (entry is null)
-            return OpenTracked(path);
 
+        LibraryHints = SaveLibrary.GetHintNames(id);
+        try
+        {
+            return entry is null ? OpenTracked(path) : OpenArchived(path, entry);
+        }
+        finally
+        {
+            LibraryHints = null;
+        }
+    }
+
+    private SaveSummary? OpenArchived(string path, string entry)
+    {
         var before = Session.Revision;
         var virtualPath = SaveLibrary.GetArchivedPath(path, entry);
         try
@@ -163,15 +178,8 @@ internal sealed partial class WebApi
         _ => string.Empty,
     };
 
-    /// <summary> "switch" → "Nintendo Switch"; nested folders keep their path ("Nintendo Switch › Scarlet"). </summary>
-    private static string GetGroupName(string key)
-    {
-        if (key.Length == 0)
-            return "Saves";
-        var parts = key.Split('/');
-        parts[0] = PlatformNames.GetValueOrDefault(parts[0], parts[0]);
-        return string.Join(" › ", parts);
-    }
+    /// <summary> "switch" → "Nintendo Switch"; other folder names are shown as they are. </summary>
+    private static string GetGroupName(string key) => key.Length == 0 ? "Saves" : PlatformNames.GetValueOrDefault(key, key);
 
     private static readonly Dictionary<string, string> PlatformNames = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -193,7 +201,62 @@ internal sealed partial class WebApi
         ["wii"] = "Wii",
     };
 
+    /// <summary>
+    /// The game's name. Saves that can't tell a pair apart (international Red/Blue, Ruby/Sapphire...) report the pair,
+    /// which PKHeX only names by its code ("RB"): spell out both games instead.
+    /// </summary>
+    internal static string GetGameName(GameVersion version, int language)
+    {
+        if (GamePairs.TryGetValue(version, out var games))
+            return string.Join(" / ", games.Select(g => GetGameName(g, language)));
+
+        var name = GameInfo.GetVersionName(version);
+        // "Blue [INT]/Green [JP]": the same version, sold as Blue outside Japan and as Green in Japan.
+        var regions = name.Split('/');
+        if (regions.Length > 1 && name.Contains('['))
+            name = regions.FirstOrDefault(r => r.Contains(language == (int)LanguageID.Japanese ? "[JP]" : "[INT]")) ?? regions[0];
+        return TrimRegion(name);
+    }
+
+    /// <summary> "Blue [JP]" → "Blue" (the badge shows the language). </summary>
+    private static string TrimRegion(string name)
+    {
+        var bracket = name.LastIndexOfAny(['[', '(']);
+        return bracket > 0 && name.EndsWith(name[bracket] == '[' ? ']' : ')') ? name[..bracket].TrimEnd() : name;
+    }
+
+    private static readonly Dictionary<GameVersion, GameVersion[]> GamePairs = new()
+    {
+        [RB] = [RD, BU],
+        [RBY] = [RD, BU, YW],
+        [GS] = [GD, SI],
+        [GSC] = [GD, SI, C],
+        [RS] = [R, S],
+        [RSE] = [R, S, E],
+        [FRLG] = [FR, LG],
+        [DP] = [D, P],
+        [DPPt] = [D, P, Pt],
+        [HGSS] = [HG, SS],
+        [BW] = [B, W],
+        [B2W2] = [B2, W2],
+        [XY] = [X, Y],
+        [ORAS] = [OR, AS],
+        [SM] = [SN, MN],
+        [USUM] = [US, UM],
+        [GG] = [GP, GE],
+        [SWSH] = [SW, SH],
+        [BDSP] = [BD, SP],
+        [SV] = [SL, VL],
+        [CXD] = [COLO, XD],
+    };
+
     /// <summary> Box art in wwwroot/img/games (pokemon-{name}.png); saves that can't tell a pair apart get both. </summary>
+    private static string[] GetGameIcons(GameVersion version, int language) => version switch
+    {
+        GN when language != (int)LanguageID.Japanese => ["blue"], // international Blue shares Japanese Green's version
+        _ => GetGameIcons(version),
+    };
+
     private static string[] GetGameIcons(GameVersion version) => version switch
     {
         RD => ["red"],

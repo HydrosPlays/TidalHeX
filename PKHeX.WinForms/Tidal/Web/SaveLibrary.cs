@@ -85,8 +85,17 @@ internal sealed class SaveLibrary
         };
         return Directory.EnumerateFiles(root, "*", options)
             .Where(p => !GetRelativePath(root, p).Split('/').Any(part => part.StartsWith('.')))
+            .Where(p => !IgnoredFiles.Contains(Path.GetFileName(p)))
             .Order(StringComparer.OrdinalIgnoreCase);
     }
+
+    /// <summary> Files that sit next to saves but aren't saves, so they aren't counted as unrecognized. </summary>
+    private static readonly HashSet<string> IgnoredFiles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "SecureValue", // Checkpoint: the 3DS title's secure value, saved with each backup
+        "desktop.ini",
+        "Thumbs.db",
+    };
 
     private static string GetRelativePath(string root, string path) => Path.GetRelativePath(root, path).Replace('\\', '/');
 
@@ -178,7 +187,13 @@ internal sealed class SaveLibrary
         return SaveUtil.TryGetSaveFile(card, out sav);
     }
 
-    private static LibraryItem Describe(SaveFile sav, string id, FileInfo fi, string? entry) => new(id, fi.FullName, entry, fi.Name, fi.Length, fi.LastWriteTime)
+    private static LibraryItem Describe(SaveFile sav, string id, FileInfo fi, string? entry)
+    {
+        ApplyGameHints(sav, GetHintNames(id));
+        return DescribeRevised(sav, id, fi, entry);
+    }
+
+    private static LibraryItem DescribeRevised(SaveFile sav, string id, FileInfo fi, string? entry) => new(id, fi.FullName, entry, fi.Name, fi.Length, fi.LastWriteTime)
     {
         Version = sav.Version,
         Generation = sav.Generation,
@@ -193,6 +208,71 @@ internal sealed class SaveLibrary
         DexCaught = sav.HasPokeDex ? WebApi.GetDexCaught(sav) : -1,
         Party = GetParty(sav),
     };
+
+    /// <summary>
+    /// Gen 1-3 saves don't store which game of a pair they're from (Red or Blue?), and most don't store their language.
+    /// PKHeX guesses both from the file name ("Pokemon Blue.sav") and otherwise uses its Save Language settings. The
+    /// library also tries the .zip and the folders the save is in, since Checkpoint keeps every backup as "sav.dat" in a
+    /// folder named after it ("blue-main").
+    /// </summary>
+    /// <param name="sav">Save to update.</param>
+    /// <param name="names">Names to try, most specific first (see <see cref="GetHintNames"/>).</param>
+    public static void ApplyGameHints(SaveFile sav, IReadOnlyList<string> names)
+    {
+        if (sav.Generation > 3)
+            return;
+        foreach (var name in names)
+        {
+            var result = sav switch
+            {
+                SAV1 s1 => SaveLanguage.InferFrom1(name, s1.Version),
+                SAV2 s2 => SaveLanguage.InferFrom2(name, s2.Version),
+                SAV3 s3 => SaveLanguage.InferFrom3(name, s3.Version is GameVersion.FR ? GameVersion.FRLG : s3.Version),
+                _ => default,
+            };
+            if (!IsHintValid(result, sav))
+                continue;
+            sav.Language = (int)result.Language;
+            sav.Version = result.Version;
+            if (sav is SAV3FRLG frlg)
+                frlg.ResetPersonal(result.Version);
+            return;
+        }
+        SaveLanguage.TryRevise(sav); // PKHeX's own guess: the file name, else its Save Language settings
+    }
+
+    /// <summary> SaveLanguage's checks: a guess must agree with what the save shows (Japanese, Korean, R/S vs E vs FR/LG). </summary>
+    private static bool IsHintValid(SaveLanguageResult result, SaveFile sav) => result != default && sav switch
+    {
+        SAV1 s1 => s1.Japanese == (result.Language == LanguageID.Japanese),
+        SAV2 s2 => s2.Japanese ? result.Language == LanguageID.Japanese
+            : s2.Korean ? result.Language == LanguageID.Korean
+            : result.Language is not (LanguageID.Japanese or LanguageID.Korean),
+        SAV3 s3 => s3.Japanese == (result.Language == LanguageID.Japanese) && s3 switch
+        {
+            SAV3RS => result.Version is GameVersion.R or GameVersion.S,
+            SAV3E => result.Version is GameVersion.E,
+            SAV3FRLG => result.Version is GameVersion.FR or GameVersion.LG,
+            _ => false,
+        },
+        _ => false,
+    };
+
+    /// <summary>
+    /// Names that may say which game a save is from, most specific first: the save's own name (inside a .zip: the entry,
+    /// then its folders in the zip), the file, then the folders inside "saves" from the innermost out.
+    /// </summary>
+    /// <param name="id">A library <see cref="LibraryItem.Id"/>.</param>
+    public static List<string> GetHintNames(string id)
+    {
+        var split = id.IndexOf(EntrySeparator, StringComparison.Ordinal);
+        var relative = split < 0 ? id : id[..split];
+        var names = new List<string>();
+        if (split >= 0)
+            names.AddRange(id[(split + EntrySeparator.Length)..].Split('/').Reverse());
+        names.AddRange(relative.Split('/').Reverse());
+        return names.FindAll(n => n.Length != 0);
+    }
 
     private static string GetPlayTime(SaveFile sav)
     {
@@ -329,14 +409,30 @@ internal sealed record LibraryItem(string Id, string FullPath, string? Entry, st
     public List<LibraryMon> Party { get; init; } = [];
     public string? Note { get; init; }
 
-    /// <summary> Sub-folder path relative to the library ("" for saves directly in it). </summary>
+    private string RelativePath => Entry is null ? Id : Id[..Id.IndexOf(SaveLibrary.EntrySeparator, StringComparison.Ordinal)];
+
+    /// <summary>
+    /// The top-level folder it's in ("" for saves directly in the library). Everything inside a folder belongs to its group,
+    /// including the folder per backup that Checkpoint makes (switch/shield/…, gb/blue-main/…).
+    /// </summary>
     public string Group
     {
         get
         {
-            var path = Entry is null ? Id : Id[..Id.IndexOf(SaveLibrary.EntrySeparator, StringComparison.Ordinal)];
-            var slash = path.LastIndexOf('/');
+            var path = RelativePath;
+            var slash = path.IndexOf('/');
             return slash < 0 ? string.Empty : path[..slash];
+        }
+    }
+
+    /// <summary> Folders between the group and the file (e.g. "blue-main"), "" if the file sits in the group folder. </summary>
+    public string SubFolder
+    {
+        get
+        {
+            var path = RelativePath;
+            int first = path.IndexOf('/'), last = path.LastIndexOf('/');
+            return first < 0 || first == last ? string.Empty : path[(first + 1)..last];
         }
     }
 }

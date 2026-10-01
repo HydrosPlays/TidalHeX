@@ -141,7 +141,7 @@ public sealed record LibraryResult
 
 public sealed record LibraryGroup
 {
-    /// <summary> Sub-folder relative to the saves folder, "" for saves directly in it. </summary>
+    /// <summary> Top-level folder inside the saves folder (its sub-folders belong to it too), "" for saves directly in it. </summary>
     public string Key { get; init; } = string.Empty;
     /// <summary> Display name, e.g. "Nintendo Switch" for a "switch" folder. </summary>
     public string Name { get; init; } = string.Empty;
@@ -152,6 +152,8 @@ public sealed record LibrarySave
 {
     public string Id { get; init; } = string.Empty;
     public string FileName { get; init; } = string.Empty;
+    /// <summary> Folders between the group's folder and the file (e.g. a Checkpoint backup's folder), "" if none. </summary>
+    public string Folder { get; init; } = string.Empty;
     /// <summary> The save's name inside a .zip; null for plain files. </summary>
     public string? Entry { get; init; }
     public int Version { get; init; }

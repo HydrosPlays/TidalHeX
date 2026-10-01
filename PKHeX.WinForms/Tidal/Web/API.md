@@ -158,10 +158,11 @@ PluginItem { id, text, tip, enabled, hasIcon, children: PluginItem[] }   // icon
 ```
 
 ```ts
-// Save Manager. Groups = sub-folders ("" = the folder itself), oldest generation first; saves by generation, then game.
+// Save Manager. Groups = top-level folders ("" = the folder itself; deeper folders stay in their group and show in
+// `folder`), oldest generation first; saves by generation, then game.
 LibraryResult { folder, groups: LibraryGroup[], skipped: string[] }   // skipped: files that aren't recognized saves
 LibraryGroup  { key, name, saves: LibrarySave[] }                      // name: "switch" → "Nintendo Switch"
-LibrarySave   { id, fileName, entry?, version, game, generation, ot, tid, sid, playTime, language, languageName, started,
+LibrarySave   { id, fileName, folder, entry?, version, game, generation, ot, tid, sid, playTime, language, languageName, started,
                 gender, money, dexCaught, size, modified, icons: string[],
                 party: { species, form, gender, shiny, egg }[], loaded, note? }   // icons: img/games/pokemon-*.png
 ```

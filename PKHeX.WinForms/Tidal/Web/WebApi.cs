@@ -349,7 +349,7 @@ internal sealed partial class WebApi
         {
             Loaded = true,
             Blank = !sav.State.Exportable,
-            Game = GameInfo.GetVersionName(sav.Version),
+            Game = GetGameName(sav.Version, sav.Language),
             Version = (int)sav.Version,
             Generation = sav.Generation,
             Context = sav.Context.ToString(),
@@ -374,8 +374,10 @@ internal sealed partial class WebApi
     }
 
     /// <summary> TID/SID as the games display them (TrainerIDFormat). </summary>
+    /// <remarks> Gen 1/2 have no SID (PKHeX only formats their Pokémon as TID-only, not their saves). </remarks>
     internal static string FormatTrainerId(SaveFile sav, bool secret) => sav.TrainerIDDisplayFormat switch
     {
+        _ when secret && sav.Generation <= 2 => string.Empty,
         TrainerIDFormat.SixDigit => secret ? sav.DisplaySID.ToString("D4") : sav.DisplayTID.ToString("D6"),
         TrainerIDFormat.SixteenBitSingle => secret ? string.Empty : sav.DisplayTID.ToString("D5"),
         _ => (secret ? sav.DisplaySID : sav.DisplayTID).ToString("D5"),

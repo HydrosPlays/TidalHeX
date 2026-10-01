@@ -82,11 +82,14 @@ Keep all your saves next to TidalHeX and switch between them with a double-click
 
 1. Make a folder named `saves` next to `TidalHeX.exe`, or open the Save Manager and click **Open folder** (it creates the folder for you).
 2. Put your saves in it: raw save files (`main`, `*.sav`, `*.dsv`, `*.bin`, …) or `.zip` backups, such as the ones JKSV makes for Switch games.
-3. Optionally, sort them into folders. Each folder becomes a group, and common console names get a proper title (`gb`, `gbc`, `gba`, `gc`, `ds`, `3ds`, `switch`). Any other folder name is shown as it is.
+3. Optionally, sort them into folders. Each folder becomes a group, and common console names get a proper title (`gb`, `gbc`, `gba`, `gc`, `ds`, `3ds`, `switch`). Any other folder name is shown as it is. Folders inside a group, like the folder Checkpoint makes for each backup, stay in that group.
 
    ```
    TidalHeX.exe
    saves/
+   ├── gb/
+   │   └── blue-main/
+   │       └── sav.dat
    ├── gba/
    │   └── Emerald.sav
    ├── ds/
@@ -106,6 +109,19 @@ Keep all your saves next to TidalHeX and switch between them with a double-click
 - Play time, the date the adventure started, money and the number of Pokémon caught. The start date shows for Gen 4 onward; Gen 1–3, Let's Go and Legends: Z-A don't have one.
 - Language, generation and ZIP badges, plus **Open now** on the save that's loaded.
 - The party, and when the file was last saved.
+
+**Red or Blue? Naming Gen 1–3 saves**
+
+Saves from the first three generations don't record which game of a pair they came from (Red or Blue, Gold or Silver, Ruby or Sapphire, FireRed or LeafGreen), and most don't record their language either. Like PKHeX, TidalHeX works both out from the name: it checks the save's file name first, then the `.zip` it's in, then its folders. A Checkpoint backup in `blue-main/sav.dat` is read as Blue. Put the game's name in the save's own language somewhere in the file or folder name:
+
+| Game | English | French | German | Italian | Spanish | Japanese |
+|---|---|---|---|---|---|---|
+| Red | `red` | `rouge` | `rot` | `rosso` | `rojo` | `aka` / 赤 |
+| Blue | `blue` | `bleu` | `blau` | `blu` | `azul` | `ao` / 青 |
+| Green (Japan only) | | | | | | `midori` / 緑 |
+| Yellow | `yellow` | `jaune` | `gelb` | `giallo` | `amarillo` | `pika` / 黄 |
+
+Later games work the same way with their English names (`gold`, `silver`, `crystal`, `ruby`, `sapphire`, `firered`, `leafgreen`) or translated ones (`rubin`, `saphir`, `feuer`, `blatt`, …). Yellow, Crystal and Emerald are also recognized from the save itself, so for those the name only adds the language. A save whose name doesn't say uses PKHeX's default from **Settings → Save Language** (Red/Blue, English, unless you change it). Keep names simple: a folder called `transferred` contains "red".
 
 **Good to know**
 

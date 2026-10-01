@@ -485,7 +485,12 @@ internal sealed partial class WebApi
     private bool SanityCheckSAV(ref SaveFile sav)
     {
         if (sav.Generation <= 3)
-            SaveLanguage.TryRevise(sav);
+        {
+            if (LibraryHints is { } hints)
+                SaveLibrary.ApplyGameHints(sav, hints); // the file name, then its .zip and folders (Save Manager)
+            else
+                SaveLanguage.TryRevise(sav);
+        }
 
         if (sav.State.Exportable && sav is SAV3 s3)
         {

@@ -550,7 +550,8 @@ img.sprite { image-rendering: var(--sprite-render); }
 .save-title > b { flex: 1; min-width: 0; font-size: 15.5px; font-family: var(--font-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .save-info .sub { font-size: 12.5px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .save-trainer { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--text-soft); white-space: nowrap; overflow: hidden; }
-.save-trainer b { font-size: 13px; color: #fff; margin-left: -4px; }
+.save-trainer b { font-size: 13px; color: #fff; }
+.save-trainer .g + b { margin-left: -4px; } /* snug against the gender symbol (games without one have none) */
 .save-trainer .g { font-weight: 800; font-size: 14px; }
 .save-trainer .g.m { color: #6fc2ff; }
 .save-trainer .g.f { color: #ff7ab8; }
