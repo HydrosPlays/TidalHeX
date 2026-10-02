@@ -9,7 +9,7 @@ namespace PKHeX.WinForms.Tidal;
 /// </summary>
 internal static class TidalVersion
 {
-    public const string Current = "0.5.0-beta";
+    public const string Current = "0.5.5-beta";
 
     /// <summary> Display form: "0.5.0-beta" → "0.5.0 Beta". </summary>
     public static string Display(string version)
