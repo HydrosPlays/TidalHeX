@@ -54,6 +54,7 @@ The classic PKHeX window is still there, restyled with the TidalHeX ocean theme.
 - **In-app messages**: PKHeX's questions and errors appear inside the interface instead of Windows message boxes.
 - **Keyboard friendly**: Q/E switch pages (the L/R buttons), Esc goes back, Ctrl+1–6 jump to a page, Ctrl+O opens a file and Ctrl+E exports the save. Each screen lists its actions along the bottom.
 - **Themes**: Tidal Light, Tidal Dark, Tidal PSS, Tidal ZA and Tidal Pixel (see [Themes](#themes)).
+- **Updates**: at startup TidalHeX checks this repository's releases. When a newer version is out it shows the release notes, and **Update now** downloads it, swaps it in and restarts. Turn the check off or run it by hand in Settings → Updates.
 - **Light on your PC**: the background animation only runs on the home screen while the window is focused, and pauses when minimized. A "Reduce motion" setting turns it off entirely.
 
 ### Easier Encounter and Mystery Gift databases
@@ -224,6 +225,14 @@ dotnet publish PKHeX.WinForms/PKHeX.WinForms.csproj -c Release -o build
 ```
 
 This produces a single `PKHeX.exe` in `build`. The project can also be opened in [Visual Studio](https://visualstudio.microsoft.com/downloads/) through the .sln or .csproj file.
+
+### Publishing a release
+
+The in-app updater compares its own version with the tags of this repository's releases (pre-releases included):
+
+1. Set the new version in `PKHeX.WinForms/Tidal/TidalVersion.cs` (for example `0.6.0-beta`) and build.
+2. Tag the release with the same version (`v0.6.0-beta`; the `v` is optional).
+3. Attach the exe named exactly `TidalHeX.exe`.
 
 ### Where things are
 

@@ -425,7 +425,7 @@ public sealed class TidalWebHost : Form
         else if (Init.BackupPrompt)
             PromptBackup(Settings.LocalResources.GetBackupPath());
 
-        _ = CheckForUpdatesAsync();
+        _ = Api.CheckForUpdateAtStartup();
     }
 
     private void WarnBehavior()
@@ -463,23 +463,6 @@ public sealed class TidalWebHost : Form
         catch (Exception ex)
         // Maybe they put their exe in a folder that we can't create files/folders to.
         { WinFormsUtil.Error($"{MsgBackupUnable} @ {folder}", ex); }
-    }
-
-    private async Task CheckForUpdatesAsync()
-    {
-        Version? latest;
-        // User might not be connected to the internet or with a flaky connection.
-        try { latest = await Task.Run(UpdateUtil.GetLatestPKHeXVersion).ConfigureAwait(true); }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Exception while checking for latest version: {ex}");
-            return;
-        }
-        if (latest is null || latest <= Program.CurrentVersion || IsDisposed)
-            return;
-
-        var date = $"{2000 + latest.Major:00}{latest.Minor:00}{latest.Build:00}";
-        Api.Toast("info", $"{MsgProgramUpdateAvailable} {date}");
     }
 
     #endregion
@@ -548,6 +531,14 @@ public sealed class TidalWebHost : Form
     /// Saves settings and restarts the program (it will start in the classic window if <see cref="StartupSettings.TidalUI"/> is off).
     /// </summary>
     internal void RestartInClassicMode()
+    {
+        CloseConfirmed = true;
+        SaveSettings();
+        BeginInvoke(Application.Restart);
+    }
+
+    /// <summary> An update replaced the exe: save settings and start the new version (the user already confirmed). </summary>
+    internal void RestartAfterUpdate()
     {
         CloseConfirmed = true;
         SaveSettings();

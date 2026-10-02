@@ -24,6 +24,8 @@
     recent: [],
     settings: { reducedMotion: false, hideSecrets: false, encountersInGameOnly: true, giftsInGameOnly: true, theme: 'light' },
     version: '',
+    tidalVersion: '',
+    update: null, // { state: UpdateState, phase: 'available' | 'downloading' | 'restarting', received, total }
     editor: null,
     lists: {},
     toasts: [],
@@ -91,6 +93,21 @@
       if (s) this.settings = s;
       return !!s;
     },
+    /** Settings → Check now (manual) or the startup check: shows the update window, or says it's up to date. */
+    async checkForUpdate() {
+      const s = await this.call('update.check').catch(() => null);
+      if (!s) return;
+      if (s.error) { this.toast(s.error, 'error'); return; }
+      if (s.available) this.update = { state: s, phase: 'available' };
+      else this.toast(`You're on the latest version (${s.currentDisplay}).`, 'success');
+    },
+    async installUpdate() {
+      if (!this.update) return;
+      this.update = { ...this.update, phase: 'downloading', received: 0, total: this.update.state.latest.size };
+      const ok = await this.call('update.install').catch(() => false);
+      if (!ok && this.update) this.update = { ...this.update, phase: 'available' }; // cancelled or failed (PKHeX said why)
+    },
+    async skipUpdate() { await this.call('update.skip').catch(() => {}); this.update = null; },
     async classic() { await this.call('app.classic').catch(() => null); },
     async loadEditor(state) { this.editor = state; this.go('editor'); },
     /** Answers the front dialog; PKHeX continues with that result. */
@@ -118,6 +135,8 @@
   T.on('boxChanged', () => store.bumpSprites());
   T.on('editorLoaded', e => { store.editor = e; store.go('editor'); });
   T.on('toast', t => store.toast(t.text, t.kind));
+  T.on('updateAvailable', s => { if (!store.update) store.update = { state: s, phase: 'available' }; });
+  T.on('updateProgress', p => { if (store.update) Object.assign(store.update, { received: p.received, total: p.total, phase: p.done ? 'restarting' : 'downloading' }); });
   T.on('dialog', d => store.dialogs.push(d));
 
   // ------------------------------------------------------------------ root
@@ -255,6 +274,7 @@
       <div v-if="store.dragOver && store.view === 'boxes'" class="dropzone compact"><div class="box"><t-icon name="drop"></t-icon><div><h2>{{ store.dropSlot ? 'Drop to place it in this slot' : 'Drop onto a slot to place it' }}</h2><div class="muted">or anywhere else to open the file</div></div></div></div>
       <div v-else-if="store.dragOver" class="dropzone"><div class="box"><t-icon name="drop"></t-icon><h2>Drop to open</h2><div class="muted">Saves, Pokémon files, gifts and box dumps</div></div></div>
       <t-modal :store="store"></t-modal>
+      <t-update :store="store"></t-update>
       <t-dialog :store="store"></t-dialog>
       <t-ctx :store="store"></t-ctx>
       <t-toasts :store="store"></t-toasts>
@@ -275,6 +295,7 @@
     app.component('t-text', C.TText);
     app.component('t-fields', C.TFields);
     app.component('t-game-badge', C.TGameBadge);
+    app.component('t-update', C.TUpdate);
     app.component('t-modal', C.TModal);
     app.component('t-dialog', C.TDialog);
     app.component('t-tool', C.TTool);
@@ -290,7 +311,7 @@
     const [data] = await Promise.all([init, minimum]);
     if (data.error) store.toast(data.error, 'error');
     else {
-      store.save = data.save; store.recent = data.recent ?? []; store.settings = data.settings ?? store.settings; store.version = data.version;
+      store.save = data.save; store.recent = data.recent ?? []; store.settings = data.settings ?? store.settings; store.version = data.version; store.tidalVersion = data.tidalVersion ?? '';
       fx.setReduced(store.settings.reducedMotion);
       store.applyTheme(store.settings.theme);
     }

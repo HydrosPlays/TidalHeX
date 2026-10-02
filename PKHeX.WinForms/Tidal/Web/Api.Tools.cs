@@ -621,6 +621,9 @@ internal sealed partial class WebApi
             case "reducedMotion":
                 Settings.Startup.TidalReduceMotion = args.Value;
                 break;
+            case "checkForUpdates":
+                Settings.Startup.TidalCheckForUpdates = args.Value;
+                break;
             default:
                 throw new ArgumentException($"Unknown option '{args.Name}'.");
         }

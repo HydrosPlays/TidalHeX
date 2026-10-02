@@ -57,6 +57,7 @@ internal sealed partial class WebApi
         return new InitResult
         {
             Version = GetVersionString(),
+            TidalVersion = Tidal.TidalVersion.Display(Tidal.TidalVersion.Current),
             Hax = HaX,
             Save = GetSaveSummary(),
             Recent = GetRecent(),

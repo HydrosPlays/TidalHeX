@@ -52,6 +52,7 @@ internal sealed partial class WebApi
         RegisterPlugins();
         RegisterEditor();
         RegisterSaves();
+        RegisterUpdate();
     }
 
     #region Global initialization (mirrors Main.FormInitializeSecond / ReloadProgramSettings / ApplyMainLanguage)
@@ -428,6 +429,7 @@ internal sealed partial class WebApi
     public static UiSettings GetUiSettings() => new()
     {
         ReducedMotion = Settings.Startup.TidalReduceMotion,
+        CheckForUpdates = Settings.Startup.TidalCheckForUpdates,
         Theme = GetThemeName(Settings.Startup.TidalUITheme),
         HideSecrets = Settings.Privacy.HideSecretDetails,
         EncountersInGameOnly = Settings.EncounterDb.FilterUnavailableSpecies,

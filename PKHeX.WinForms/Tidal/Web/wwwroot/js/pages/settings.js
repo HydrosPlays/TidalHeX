@@ -6,8 +6,13 @@ window.TidalPages.settings = {
     this.store.hints = [];
     window.TidalFx.enter(this.$el.querySelectorAll('.set-row'), { stagger: 50, y: 12 });
   },
-  data: () => ({ themes: [{ id: 'light', name: 'Tidal Light (Default)' }, { id: 'dark', name: 'Tidal Dark' }, { id: 'pss', name: 'Tidal PSS' }, { id: 'za', name: 'Tidal ZA' }, { id: 'pixel', name: 'Tidal Pixel' }] }),
+  data: () => ({ themes: [{ id: 'light', name: 'Tidal Light (Default)' }, { id: 'dark', name: 'Tidal Dark' }, { id: 'pss', name: 'Tidal PSS' }, { id: 'za', name: 'Tidal ZA' }, { id: 'pixel', name: 'Tidal Pixel' }], checking: false }),
   methods: {
+    async check() {
+      this.checking = true;
+      try { await this.store.checkForUpdate(); }
+      finally { this.checking = false; }
+    },
     motion(v) {
       this.store.settings.reducedMotion = v;
       window.TidalFx.setReduced(v);
@@ -21,7 +26,7 @@ window.TidalPages.settings = {
           <img src="img/logo.png" alt="">
           <div>
             <h2>TidalHeX</h2>
-            <div class="muted">Built on PKHeX {{ store.version }}</div>
+            <div class="muted">Version {{ store.tidalVersion }} · Built on PKHeX {{ store.version }}</div>
           </div>
         </div>
 
@@ -41,6 +46,12 @@ window.TidalPages.settings = {
             <span class="ic" style="--c: var(--cyan)"><t-icon name="sparkle"></t-icon></span>
             <div class="set-text"><b>Reduce motion</b><small>Turns off the bubbles and animations.</small></div>
             <t-switch :model-value="store.settings.reducedMotion" @update:model-value="motion"></t-switch>
+          </div>
+          <div class="set-row">
+            <span class="ic" style="--c: var(--dock-green)"><t-icon name="refresh"></t-icon></span>
+            <div class="set-text"><b>Updates</b><small>Check GitHub for a new TidalHeX release when it starts. You're on {{ store.tidalVersion }}.</small></div>
+            <t-switch :model-value="store.settings.checkForUpdates" @update:model-value="v => { store.settings.checkForUpdates = v; store.setOption('checkForUpdates', v); }"></t-switch>
+            <button class="btn" :disabled="checking" @click="check"><t-icon name="refresh"></t-icon>{{ checking ? 'Checking…' : 'Check now' }}</button>
           </div>
           <div class="set-row">
             <span class="ic" style="--c: var(--dock-orange)"><t-icon name="settings"></t-icon></span>

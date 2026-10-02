@@ -137,6 +137,7 @@ window.TidalMock = (() => {
       case 'app.init': return delay({ version: 'dev', save, recent: [{ path: save.filePath, name: 'main', folder: 'Scarlet', exists: true }, { path: 'C:\\Saves\\Emerald.sav', name: 'Emerald.sav', folder: 'Saves', exists: true }, { path: 'C:\\Saves\\HGSS.sav', name: 'HGSS.sav', folder: 'Saves', exists: true }], settings: mockSettings });
       case 'app.setOption': mockSettings[args.name] = args.value; return delay({ ...mockSettings });
       case 'app.setTheme': mockSettings.theme = args.theme; return delay({ ...mockSettings });
+      case 'update.check': return delay({ current: '0.5.0-beta', currentDisplay: '0.5.0 Beta', checked: true, available: false, latest: null });
       case 'box.get': { const b = args.box; return delay({ box: b, name: `Box ${b + 1}`, boxCount, wallpaper: '', slots: boxes[b] }); }
       case 'box.party': return delay({ slots: party });
       case 'box.move': {

@@ -341,5 +341,67 @@ window.TidalComponents = (() => {
       </div>`,
   };
 
-  return { TIcon, TCombo, TGames, TDialog, TTool, TSwitch, TTri, TNumber, TText, TModal, TToasts, TCtx, TFields, TGameBadge };
+  /** Release notes are Markdown: headings, bullets, **bold**, `code` and links (shown as text). Everything is escaped first. */
+  function renderNotes(md) {
+    const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const inline = t => esc(t)
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    const out = [];
+    let list = false;
+    for (const raw of (md ?? '').replace(/\r/g, '').split('\n')) {
+      const line = raw.trimEnd();
+      const bullet = /^\s*[-*] (.*)$/.exec(line);
+      if (!bullet && list) { out.push('</ul>'); list = false; }
+      if (bullet) { if (!list) { out.push('<ul>'); list = true; } out.push(`<li>${inline(bullet[1])}</li>`); }
+      else if (/^#{1,2} /.test(line)) out.push(`<h4>${inline(line.replace(/^#+ /, ''))}</h4>`);
+      else if (/^#{3,} /.test(line)) out.push(`<h5>${inline(line.replace(/^#+ /, ''))}</h5>`);
+      else if (line.trim()) out.push(`<p>${inline(line)}</p>`);
+    }
+    if (list) out.push('</ul>');
+    return out.join('');
+  }
+
+  /** "A new version is out" window: release notes, then the download's progress and the restart. */
+  const TUpdate = {
+    props: { store: Object },
+    computed: {
+      u() { return this.store.update; },
+      latest() { return this.u?.state.latest; },
+      notes() { return renderNotes(this.latest?.notes); },
+      busy() { return this.u && this.u.phase !== 'available'; },
+      percent() { return this.u?.total ? Math.min(100, Math.round((this.u.received ?? 0) * 100 / this.u.total)) : 0; },
+      mb() { const f = n => ((n ?? 0) / 1048576).toFixed(1); return `${f(this.u?.received)} / ${f(this.u?.total)} MB`; },
+      date() { return this.latest?.published ? new Date(this.latest.published).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }) : ''; },
+    },
+    methods: { later() { if (!this.busy) this.store.update = null; } },
+    template: `
+      <div v-if="u" class="modal-back update-back" @mousedown.self="later">
+        <div class="modal screen dark update">
+          <div class="update-head">
+            <img src="img/logo.png" alt="">
+            <div>
+              <h2>A new version of TidalHeX is out</h2>
+              <div class="muted">{{ latest.display }} · you have {{ u.state.currentDisplay }}<template v-if="date"> · released {{ date }}</template></div>
+            </div>
+          </div>
+          <h3 class="update-title">{{ latest.name }}</h3>
+          <div class="update-notes" v-html="notes"></div>
+          <div v-if="busy" class="update-progress">
+            <div class="bar"><i :style="{ width: percent + '%' }"></i></div>
+            <small>{{ u.phase === 'restarting' ? 'Installed. Restarting TidalHeX…' : 'Downloading… ' + mb }}</small>
+          </div>
+          <div class="foot">
+            <button class="btn ghost" :disabled="busy" @click="store.call('update.openPage')"><t-icon name="globe"></t-icon>Release page</button>
+            <span class="grow"></span>
+            <button class="btn ghost" :disabled="busy" @click="store.skipUpdate()">Skip this version</button>
+            <button class="btn" :disabled="busy" @click="later">Later</button>
+            <button class="btn primary" :disabled="busy" @click="store.installUpdate()"><t-icon name="export"></t-icon>Update now</button>
+          </div>
+        </div>
+      </div>`,
+  };
+
+  return { TIcon, TCombo, TGames, TDialog, TTool, TSwitch, TTri, TNumber, TText, TModal, TToasts, TCtx, TFields, TGameBadge, TUpdate };
 })();

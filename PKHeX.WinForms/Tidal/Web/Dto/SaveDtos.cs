@@ -89,6 +89,9 @@ public sealed record UiSettings
 {
     public bool ReducedMotion { get; init; }
 
+    /// <summary> Look for a new TidalHeX release at startup (Startup.TidalCheckForUpdates). </summary>
+    public bool CheckForUpdates { get; init; }
+
     /// <summary> "light" (Tidal Light, default), "dark" (Tidal Dark), "pss" (Tidal PSS), "za" (Tidal ZA) or "pixel" (Tidal Pixel): Startup.TidalUITheme. </summary>
     public string Theme { get; init; } = "light";
     public bool HideSecrets { get; init; }
@@ -105,7 +108,10 @@ public sealed record UiSettings
 /// </summary>
 public sealed record InitResult
 {
+    /// <summary> PKHeX's version (yyyyMMdd). </summary>
     public string Version { get; init; } = string.Empty;
+    /// <summary> TidalHeX's version, e.g. "0.5.0 Beta". </summary>
+    public string TidalVersion { get; init; } = string.Empty;
     public bool Hax { get; init; }
     public SaveSummary Save { get; init; } = new();
     public IReadOnlyList<RecentFile> Recent { get; init; } = [];
@@ -192,3 +198,33 @@ public sealed record LibrarySave
 }
 
 public sealed record LibraryMon(ushort Species, byte Form, byte Gender, bool Shiny, bool Egg);
+
+/// <summary> Result of update.check (and the updateAvailable event). </summary>
+public sealed record UpdateState
+{
+    /// <summary> This version, e.g. "0.5.0-beta". </summary>
+    public string Current { get; init; } = string.Empty;
+    public string CurrentDisplay { get; init; } = string.Empty;
+    /// <summary> GitHub answered. </summary>
+    public bool Checked { get; init; }
+    /// <summary> A newer release is out. </summary>
+    public bool Available { get; init; }
+    /// <summary> The newest release with an exe, if any. </summary>
+    public UpdateRelease? Latest { get; init; }
+    public string? Error { get; init; }
+}
+
+public sealed record UpdateRelease
+{
+    /// <summary> The release's tag, e.g. "v0.5.1-beta". </summary>
+    public string Version { get; init; } = string.Empty;
+    /// <summary> "0.5.1 Beta". </summary>
+    public string Display { get; init; } = string.Empty;
+    /// <summary> The release title. </summary>
+    public string Name { get; init; } = string.Empty;
+    /// <summary> The release description (Markdown). </summary>
+    public string Notes { get; init; } = string.Empty;
+    /// <summary> Download size in bytes. </summary>
+    public long Size { get; init; }
+    public string Published { get; init; } = string.Empty;
+}

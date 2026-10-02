@@ -15,6 +15,8 @@ All data comes from the C# host through a JSON RPC bridge. Everything is camelCa
 - `boxChanged` → `{ box: number }` (`-1` = party): slots changed; the UI refetches.
 - `editorLoaded` → `EditorState`: a Pokémon was loaded into the editor (from a slot, file, encounter, gift).
 - `toast` → `{ kind: 'info'|'success'|'warn'|'error', text: string }`.
+- `updateAvailable` → `UpdateState`: the startup check found a newer TidalHeX release (not the skipped one).
+- `updateProgress` → `{ received, total, done? }`: download progress of `update.install`.
 
 **File drop:** the page intercepts drag/drop and calls
 `chrome.webview.postMessageWithAdditionalObjects({ id, method: 'openDropped', args: null }, fileList)`;
@@ -91,6 +93,10 @@ Responses carry `Cache-Control: max-age=31536000` when the URL has `v`; the UI b
 | `app.setOption` | `{ name: 'encountersInGameOnly' \| 'giftsInGameOnly' \| 'reducedMotion', value: bool }` | `UiSettings`; PKHeX's "filter unavailable species" for the encounter / gift databases, or Startup.TidalReduceMotion (saved on exit) |
 | `app.setTheme` | `{ theme: 'light' \| 'dark' \| 'pss' \| 'za' \| 'pixel' }` | `UiSettings`; Tidal Light / Dark / PSS / ZA / Pixel (Startup.TidalUITheme, saved on exit). The host opens the page with `?theme=` so the first frame uses it |
 | `app.classic` | – | restarts in classic PKHeX mode |
+| `update.check` | – | `UpdateState`: the newest GitHub release (pre-releases included) that has `TidalHeX.exe` attached, compared with this version (`Tidal/TidalVersion.cs`) |
+| `update.install` | – | `bool`; downloads the release from the last check (`updateProgress` events), swaps it in for the running exe (kept as `*.old.exe`, deleted next start) and restarts. Asks first about unsaved changes |
+| `update.skip` | – | `bool`; no startup reminder for that release (Startup.TidalSkippedUpdate) |
+| `update.openPage` | – | opens the release page in the browser |
 | `saves.list` | `{ refresh?: bool }` | `LibraryResult`: the Save Manager's saves (the `saves` folder next to the exe, scanned at startup; `refresh` rescans, reusing unchanged files) |
 | `saves.open` | `{ id }` | `SaveSummary \| null`; a plain file opens like `file.openPath`; a save inside a .zip loads from memory (its path points inside the .zip, so export always asks where to write, and it isn't added to the recent files) |
 | `saves.openFolder` | – | opens the `saves` folder in Explorer (creates it if needed) |
@@ -105,7 +111,7 @@ SaveSummary { loaded, blank, game, icons, version, generation, context, ot, tid,
               boxCount, slotsPerBox, pokemonCount, slotCount, dexCaught, dexTotal, hasParty, hasBox, exportable, edited,
               party: SlotDto[] }
 RecentFile  { path, name, folder, exists }
-UiSettings  { reducedMotion: bool, hideSecrets: bool, theme: 'light' | 'dark' | 'pss' | 'za' | 'pixel', encountersInGameOnly: bool, giftsInGameOnly: bool }
+UiSettings  { reducedMotion: bool, checkForUpdates: bool, hideSecrets: bool, theme: 'light' | 'dark' | 'pss' | 'za' | 'pixel', encountersInGameOnly: bool, giftsInGameOnly: bool }
 BoxData     { box, name, boxCount, wallpaper, slots: SlotDto[] }
 PartyData   { slots: SlotDto[] }
 SlotDto     { box, slot, empty, species, form, name, nickname, level, gender, shiny, egg, legal: bool|null,

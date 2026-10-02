@@ -21,6 +21,13 @@ public sealed class StartupSettings : IStartupSettings
     [LocalizedDescription("Use the TidalHeX web interface instead of the classic PKHeX window (restart required). Requires the Tidal theme.")]
     public bool TidalUI { get; set; } = true;
 
+    [LocalizedDescription("Check GitHub for a new TidalHeX release at startup.")]
+    public bool TidalCheckForUpdates { get; set; } = true;
+
+    [Browsable(false)]
+    [LocalizedDescription("A TidalHeX release the user chose to skip (no reminder until a newer one comes out).")]
+    public string TidalSkippedUpdate { get; set; } = string.Empty;
+
     [LocalizedDescription("Color theme of the TidalHeX web interface: Tidal Light (the default), Tidal Dark, Tidal PSS, Tidal ZA or Tidal Pixel.")]
     public TidalUITheme TidalUITheme { get; set; } = TidalUITheme.Light;
 
