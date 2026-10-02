@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/Based%20On-PKHeX-red?style=flat" alt="Based on PKHeX">
   <img src="https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-blue?style=flat" alt="Platform: Windows 10 | 11">
   <img src="https://img.shields.io/github/v/release/HydrosPlays/TidalHeX?include_prereleases&style=flat&label=Version&color=orange" alt="Latest version">
-  <a href="https://github.com/HydrosPlays/TidalHeX/releases"><img src="https://img.shields.io/github/downloads/HydrosPlays/TidalHeX/total?style=flat&label=Downloads&color=brightgreen" alt="Total downloads"></a>
+  <a href="https://github.com/HydrosPlays/TidalHeX/releases"><img src="https://img.shields.io/github/downloads/HydrosPlays/TidalHeX/total?style=flat&label=Downloads&color=purple" alt="Total downloads"></a>
 </p>
 
 ![TidalHeX home screen](.github/screenshots/home.webp)
