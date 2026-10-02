@@ -28,6 +28,8 @@
     data: () => ({ section: 'overview', lists: {}, busy: false, metLocations: [], eggLocations: [], moveData: null }),
     computed: {
       e() { return this.store.editor; },
+      /** The Egg toggle's picture (Manaphy's egg differs; the sprite style follows the loaded save). */
+      eggSprite() { return `/sprite/egg/${this.e?.species === 490 ? 490 : 0}?v=${this.store.saveEpoch}`; },
       /** Move options with type and category; learnable moves first and marked, as in PKHeX's move lists. */
       moveOptions() { return this.decorateMoves(new Set(this.e?.learnable ?? [])); },
       relearnOptions() { return this.decorateMoves(new Set()); },
@@ -200,7 +202,7 @@ ${keys}`;
               <button v-if="!e.genderLocked" class="round-toggle" :class="{ on: true, male: e.gender === 0, female: e.gender === 1 }" title="Toggle gender" @click="set('gender', e.gender === 0 ? 1 : 0)">{{ e.gender === 0 ? '♂' : '♀' }}</button>
               <button v-else class="round-toggle" title="Genderless / fixed gender" disabled>{{ e.gender === 0 ? '♂' : e.gender === 1 ? '♀' : '–' }}</button>
               <button v-if="e.met" class="round-toggle" :title="ballName" @click="switchSection('met')"><img :src="ballImg(e.ball)" alt=""></button>
-              <button v-if="e.format >= 2" class="round-toggle" :class="{ on: e.isEgg }" title="Egg" @click="set('isEgg', !e.isEgg)">🥚</button>
+              <button v-if="e.format >= 2" class="round-toggle egg" :class="{ on: e.isEgg }" :title="e.isEgg ? 'Egg (click to hatch)' : 'Not an egg (click to make it one)'" @click="set('isEgg', !e.isEgg)"><img :src="eggSprite" alt="Egg"></button>
             </div>
             <div v-if="e.legality" class="legal-card" :class="e.legality.valid ? 'ok' : 'bad'" @click="legality">
               <t-icon :name="e.legality.valid ? 'shield' : 'warn'"></t-icon>

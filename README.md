@@ -16,7 +16,7 @@
 
 TidalHeX is a fork of PKHeX that replaces the classic Windows Forms window with a new animated interface, styled after a game console's home menu and the Rotom Dex. Underneath, it is still PKHeX: saves are read and written by PKHeX's own engine (`PKHeX.Core`, unchanged), with the same legality checker and the same encounter and Mystery Gift data. TidalHeX edits your saves exactly the way PKHeX does.
 
-A built-in **Save Manager** lists every save you keep in the `saves` folder next to the exe, raw files or `.zip` backups, with each game's box art, so switching games is a double-click. PKHeX plugins work too: drop them in the `plugins` folder and their commands appear under Save Tools. The classic PKHeX window is still one click away for anything the new interface doesn't cover yet.
+A built-in **Save Manager** lists every save you keep in the `saves` folder next to the exe, raw files or `.zip` backups, with each game's box art, so switching games is a double-click. Five themes change the whole look, from the default ocean blue to a Game Boy Advance–style pixel menu. PKHeX plugins work too: drop them in the `plugins` folder and their commands appear under Save Tools. The classic PKHeX window is still one click away for anything the new interface doesn't cover yet.
 
 **We do not support or condone cheating at the expense of others. Do not use significantly hacked Pokémon in battle or in trades with those who are unaware hacked Pokémon are in use.**
 
@@ -53,6 +53,7 @@ The classic PKHeX window is still there, restyled with the TidalHeX ocean theme.
 - **Forms**: the form picker shows each form's sprite, gender forms (Meowstic, Indeedee and others) stay in step with the gender, and Gen 3 Deoxys explains that its forme comes from the game it's in.
 - **In-app messages**: PKHeX's questions and errors appear inside the interface instead of Windows message boxes.
 - **Keyboard friendly**: Q/E switch pages (the L/R buttons), Esc goes back, Ctrl+1–6 jump to a page, Ctrl+O opens a file and Ctrl+E exports the save. Each screen lists its actions along the bottom.
+- **Themes**: Tidal Light, Tidal Dark, Tidal PSS, Tidal ZA and Tidal Pixel (see [Themes](#themes)).
 - **Light on your PC**: the background animation only runs on the home screen while the window is focused, and pauses when minimized. A "Reduce motion" setting turns it off entirely.
 
 ### Easier Encounter and Mystery Gift databases
@@ -126,6 +127,69 @@ Later games work the same way with their English names (`gold`, `silver`, `cryst
 - The folder is read when TidalHeX starts, so the list is ready right away. It refreshes when you switch back to TidalHeX or press **Refresh** (Y or F5), so new files show up without restarting.
 - A save inside a `.zip` is read straight from the zip, and the zip is never changed. When you export, TidalHeX asks where to save it. Plain save files work exactly like opening them with Open File, including PKHeX's automatic backups and the recent files list.
 - Files that aren't saves are skipped, and the page tells you how many there were.
+
+### Themes
+
+TidalHeX comes with five themes. They change the colors, panels, backgrounds and animations of the whole interface; everything works the same in each.
+
+**How to change the theme**
+
+1. Open **Settings**: the gear button in the home screen's dock, the **+ Options** hint at the bottom of the home screen, or the + key.
+2. Under **Theme**, click the one you want. The interface switches right away, and TidalHeX remembers your choice the next time it starts.
+
+![Theme picker in Settings](.github/screenshots/themes/settings-themes.webp)
+
+The theme is also a PKHeX setting (**Startup → TidalUITheme**), so it can be changed from PKHeX's settings window too. PKHeX's classic windows (Ribbons, Memories and the other editors that open in their own window) keep the ocean theme in every theme. **Reduce motion** turns off each theme's background animation.
+
+#### Tidal Light (Default)
+
+The original look: a bright cyan-to-blue sea with a grid, rings and rising bubbles, frosted-glass panels, and a white-and-cyan selection ring.
+
+| Home | Boxes |
+|:---:|:---:|
+| ![Home](.github/screenshots/themes/light-home.webp) | ![Boxes](.github/screenshots/themes/light-boxes.webp) |
+| **Pokémon editor** | **Save Manager** |
+| ![Pokémon editor](.github/screenshots/themes/light-editor.webp) | ![Save Manager](.github/screenshots/themes/light-saves.webp) |
+
+#### Tidal Dark
+
+The same design on a deep night-time sea: darker panels, dimmed glows and box wallpapers, and the same cyan accents and colorful home tiles.
+
+| Home | Boxes |
+|:---:|:---:|
+| ![Home](.github/screenshots/themes/dark-home.webp) | ![Boxes](.github/screenshots/themes/dark-boxes.webp) |
+| **Pokémon editor** | **Save Manager** |
+| ![Pokémon editor](.github/screenshots/themes/dark-editor.webp) | ![Save Manager](.github/screenshots/themes/dark-saves.webp) |
+
+#### Tidal PSS
+
+Based on the Player Search System of Pokémon X/Y and Omega Ruby/Alpha Sapphire: a sunny yellow background with diagonal stripes, burnt-orange panels, navy bars across the top and bottom, and navy buttons and labels.
+
+| Home | Boxes |
+|:---:|:---:|
+| ![Home](.github/screenshots/themes/pss-home.webp) | ![Boxes](.github/screenshots/themes/pss-boxes.webp) |
+| **Pokémon editor** | **Save Manager** |
+| ![Pokémon editor](.github/screenshots/themes/pss-editor.webp) | ![Save Manager](.github/screenshots/themes/pss-saves.webp) |
+
+#### Tidal ZA
+
+Based on Pokémon Legends: Z-A. The background is the game's title screen: near-black with a teal and maroon glow, falling green data dots and floating squares (animated on the home screen). Menus are frosted slate panels with condensed white titles, and items turn white with a lime marker when you point at them, like the game's menus.
+
+| Home | Boxes |
+|:---:|:---:|
+| ![Home](.github/screenshots/themes/za-home.webp) | ![Boxes](.github/screenshots/themes/za-boxes.webp) |
+| **Pokémon editor** | **Save Manager** |
+| ![Pokémon editor](.github/screenshots/themes/za-editor.webp) | ![Save Manager](.github/screenshots/themes/za-saves.webp) |
+
+#### Tidal Pixel
+
+Based on the Game Boy and Game Boy Advance games (Gold/Silver, Ruby/Sapphire/Emerald, FireRed/LeafGreen): a light-blue striped background that scrolls on the home screen, flat dark-blue boxes with pixel frames and hard shadows, white boxes with a ▶ cursor for the item you point at, and pixel bubbles. Titles, buttons and labels use **Tidal Pixel**, a pixel font made for TidalHeX (its glyphs are drawn in `PKHeX.WinForms/Tidal/Assets/PixelFont/make_tidal_pixel.py`, which builds the font file).
+
+| Home | Boxes |
+|:---:|:---:|
+| ![Home](.github/screenshots/themes/pixel-home.webp) | ![Boxes](.github/screenshots/themes/pixel-boxes.webp) |
+| **Pokémon editor** | **Save Manager** |
+| ![Pokémon editor](.github/screenshots/themes/pixel-editor.webp) | ![Save Manager](.github/screenshots/themes/pixel-saves.webp) |
 
 ### Classic mode
 

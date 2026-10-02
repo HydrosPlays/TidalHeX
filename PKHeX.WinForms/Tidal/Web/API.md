@@ -33,6 +33,7 @@ the host reads file paths from `CoreWebView2WebMessageReceivedEventArgs.Addition
 | `/sprite/item/{item}` | held-item icon |
 | `/sprite/type/{type}?v={generation}` | small type icon (move and Tera pickers) |
 | `/sprite/gem/{type}` | Tera Type gem (`99` = Stellar) |
+| `/sprite/egg/{species}` | the plain egg sprite in the current sprite style (`490` = Manaphy's egg) |
 | `/wallpaper/{box}?v={n}` | box wallpaper image |
 
 Responses carry `Cache-Control: max-age=31536000` when the URL has `v`; the UI bumps `v` to refresh.
@@ -88,6 +89,7 @@ Responses carry `Cache-Control: max-age=31536000` when the URL has `v`; the UI b
 | `plugins.run` | `{ id }` | `bool` (clicks the plugin's menu entry, then refreshes the slots) |
 | `app.settings` | – | opens the classic settings dialog |
 | `app.setOption` | `{ name: 'encountersInGameOnly' \| 'giftsInGameOnly' \| 'reducedMotion', value: bool }` | `UiSettings`; PKHeX's "filter unavailable species" for the encounter / gift databases, or Startup.TidalReduceMotion (saved on exit) |
+| `app.setTheme` | `{ theme: 'light' \| 'dark' \| 'pss' \| 'za' \| 'pixel' }` | `UiSettings`; Tidal Light / Dark / PSS / ZA / Pixel (Startup.TidalUITheme, saved on exit). The host opens the page with `?theme=` so the first frame uses it |
 | `app.classic` | – | restarts in classic PKHeX mode |
 | `saves.list` | `{ refresh?: bool }` | `LibraryResult`: the Save Manager's saves (the `saves` folder next to the exe, scanned at startup; `refresh` rescans, reusing unchanged files) |
 | `saves.open` | `{ id }` | `SaveSummary \| null`; a plain file opens like `file.openPath`; a save inside a .zip loads from memory (its path points inside the .zip, so export always asks where to write, and it isn't added to the recent files) |
@@ -99,11 +101,11 @@ Responses carry `Cache-Control: max-age=31536000` when the URL has `v`; the UI b
 ## DTOs
 
 ```ts
-SaveSummary { loaded, blank, game, version, generation, context, ot, tid, sid, playTime, fileName, filePath,
+SaveSummary { loaded, blank, game, icons, version, generation, context, ot, tid, sid, playTime, fileName, filePath,
               boxCount, slotsPerBox, pokemonCount, slotCount, dexCaught, dexTotal, hasParty, hasBox, exportable, edited,
               party: SlotDto[] }
 RecentFile  { path, name, folder, exists }
-UiSettings  { reducedMotion: bool, hideSecrets: bool }
+UiSettings  { reducedMotion: bool, hideSecrets: bool, theme: 'light' | 'dark' | 'pss' | 'za' | 'pixel', encountersInGameOnly: bool, giftsInGameOnly: bool }
 BoxData     { box, name, boxCount, wallpaper, slots: SlotDto[] }
 PartyData   { slots: SlotDto[] }
 SlotDto     { box, slot, empty, species, form, name, nickname, level, gender, shiny, egg, legal: bool|null,

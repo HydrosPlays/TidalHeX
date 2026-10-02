@@ -44,6 +44,7 @@ internal sealed class WebImages(WebApi api)
             ["sprite", "plugin", var id] => api.GetPluginIcon(id),
             ["sprite", "type", var type] => GetTypeIcon(ToInt(type)),
             ["sprite", "gem", var type] => GetTeraGem(ToInt(type)),
+            ["sprite", "egg", var species] => GetEggSprite(ToInt(species)),
             _ => null,
         };
         if (image is null)
@@ -100,6 +101,20 @@ internal sealed class WebImages(WebApi api)
             return null;
         var gem = Drawing.Misc.TypeSpriteUtil.GetTypeSpriteGem((byte)type);
         return gem is null ? null : new Bitmap(gem); // copy: the route disposes what it returns
+    }
+
+    private static readonly System.Resources.ResourceManager PokeSpriteResources =
+        new("PKHeX.Drawing.PokeSprite.Properties.Resources", typeof(SpriteUtil).Assembly);
+
+    /// <summary>
+    /// The plain egg sprite (Manaphy has its own), trimmed, in the current sprite style. PKHeX's slot sprites draw the egg
+    /// over the Pokémon instead, so this reads the image itself.
+    /// </summary>
+    private static Image? GetEggSprite(int species)
+    {
+        var style = SpriteUtil.Spriter is SpriteBuilder5668a ? 'a' : 'b'; // artwork, or the pixel sprites the others use
+        var name = species == (int)Species.Manaphy ? $"{style}_490_e" : $"{style}_egg";
+        return PokeSpriteResources.GetObject(name) is Bitmap egg ? CropToContent(egg) : null; // a copy: the resource is shared
     }
 
     /// <summary> Bag pouch icons (the classic editor's tab images). </summary>

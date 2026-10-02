@@ -39,6 +39,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Tidal\Assets\logo.png" LogicalName="TidalHeX.logo.png" />
+    <EmbeddedResource Include="Tidal\Assets\logo-full.png" LogicalName="TidalHeX.logo-full.png" />
     <EmbeddedResource Include="Tidal\Assets\TidalHeX.ico" LogicalName="TidalHeX.icon.ico" />
   </ItemGroup>
 

@@ -43,6 +43,21 @@ public static class TidalAssets
     /// High-quality downscale of the logo, for crisp small renders (nav rail, splash).
     /// Decodes a private copy, so it is safe to call from the splash screen's thread.
     /// </summary>
+    /// <summary> The full logo with the TidalHeX wordmark (4:3), scaled to <paramref name="width"/>. </summary>
+    public static Bitmap GetLogoWithName(int width)
+    {
+        using var source = Load(s => Image.FromStream(s), "TidalHeX.logo-full.png");
+        if (source is null)
+            return new Bitmap(width, width * 3 / 4);
+        var bmp = new Bitmap(width, width * source.Height / source.Width);
+        using var g = Graphics.FromImage(bmp);
+        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        g.DrawImage(source, 0, 0, bmp.Width, bmp.Height);
+        return bmp;
+    }
+
     public static Bitmap GetLogo(int size)
     {
         var bmp = new Bitmap(size, size);

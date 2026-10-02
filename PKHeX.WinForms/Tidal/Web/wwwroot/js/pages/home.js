@@ -139,6 +139,7 @@ window.TidalPages.home = {
         </div>
         <div class="status">
           <div class="status-icon" v-if="save?.edited" title="Unsaved changes"><t-icon name="save"></t-icon></div>
+          <t-game-badge :save="save"></t-game-badge>
           <div class="clock">{{ clock }}</div>
         </div>
       </div>

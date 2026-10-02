@@ -328,5 +328,18 @@ window.TidalComponents = (() => {
       </div>`,
   };
 
-  return { TIcon, TCombo, TGames, TDialog, TTool, TSwitch, TTri, TNumber, TText, TModal, TToasts, TCtx, TFields };
+  // The loaded save's game as box art, next to the clock (both games for saves that can't tell a pair apart).
+  const TGameBadge = {
+    props: { save: Object },
+    computed: {
+      icons() { const s = this.save; return s?.loaded && !s.blank ? s.icons ?? [] : []; },
+      tip() { return this.save?.ot ? `${this.save.game} · ${this.save.ot}` : this.save?.game; },
+    },
+    template: `
+      <div v-if="icons.length" :key="icons.join()" class="game-badge" :class="{ pair: icons.length > 1 }" :title="tip">
+        <img v-for="(src, n) in icons" :key="src" :src="src" :class="'n' + n" alt="" draggable="false">
+      </div>`,
+  };
+
+  return { TIcon, TCombo, TGames, TDialog, TTool, TSwitch, TTri, TNumber, TText, TModal, TToasts, TCtx, TFields, TGameBadge };
 })();

@@ -15,6 +15,7 @@ window.TidalIcons = (() => {
     library: p('<rect x="8" y="3.5" width="11.5" height="14.5" rx="1.8"/><path d="M11 3.5v3.2h5.5V3.5"/><rect x="10.8" y="9.6" width="5.9" height="5.4" rx="1"/><path d="M4.5 7.5v11a2 2 0 0 0 2 2H16"/>'),
     clock: p('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
     calendar: p('<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>'),
+    theme: p('<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17Z" fill="currentColor"/>'),
     save: p('<path d="M5 3.5h11l3.5 3.5v13.5H5Z"/><path d="M8 3.5v5h7v-5"/><rect x="8" y="13" width="8" height="7.5"/>'),
     search: p('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/>'),
     back: p('<path d="M15 5 8 12l7 7"/>'),

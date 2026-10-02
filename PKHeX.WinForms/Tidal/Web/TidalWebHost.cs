@@ -147,7 +147,8 @@ public sealed class TidalWebHost : Form
         Resize += (_, _) => UpdateMemoryTarget();
 
         Bridge.Core = core;
-        core.Navigate(StartPage);
+        // The theme is in the address so the page draws its first frame in it (no flash of the light theme).
+        core.Navigate($"{StartPage}?theme={WebApi.GetThemeName(Program.Settings.Startup.TidalUITheme)}");
     }
 
     /// <summary>

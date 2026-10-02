@@ -22,7 +22,7 @@
     view: 'home',
     save: null,
     recent: [],
-    settings: { reducedMotion: false, hideSecrets: false, encountersInGameOnly: true, giftsInGameOnly: true },
+    settings: { reducedMotion: false, hideSecrets: false, encountersInGameOnly: true, giftsInGameOnly: true, theme: 'light' },
     version: '',
     editor: null,
     lists: {},
@@ -71,6 +71,19 @@
       if (!s) return;
       this.settings = s;
       fx.setReduced(s.reducedMotion);
+      this.applyTheme(s.theme);
+    },
+    /** Tidal Light / Dark / PSS / ZA / Pixel: the page switches right away, PKHeX keeps the choice. */
+    async setTheme(theme) {
+      this.applyTheme(theme);
+      const s = await this.call('app.setTheme', { theme }).catch(() => null);
+      if (s) this.settings = s;
+    },
+    applyTheme(theme) {
+      this.settings.theme = ['dark', 'pss', 'za', 'pixel'].includes(theme) ? theme : 'light';
+      if (this.settings.theme === 'light') delete document.documentElement.dataset.theme;
+      else document.documentElement.dataset.theme = this.settings.theme;
+      fx.setTheme(this.settings.theme); // the backdrop's decorations and particles differ per theme
     },
     /** Changes one of PKHeX's settings exposed on the pages; returns false if it failed. */
     async setOption(name, value) {
@@ -161,6 +174,20 @@
         pageRef.value?.onKey?.(e);
       }
       window.addEventListener('keydown', onKey);
+
+      // When the tabs don't fit (narrow window, a wide theme font), the ones you're not on shrink to their icon.
+      const tabsEl = ref(null);
+      function fitTabs() {
+        const nav = tabsEl.value;
+        if (!nav) return;
+        nav.classList.remove('compact'); // measure at full size, so it can grow back
+        nav.classList.toggle('compact', nav.scrollWidth > nav.clientWidth + 1);
+      }
+      const refit = () => nextTick(fitTabs);
+      window.addEventListener('resize', refit);
+      watch(() => [store.view, store.booted, store.settings.theme], refit);
+      document.fonts?.ready.then(refit);
+      document.fonts?.addEventListener('loadingdone', refit); // a theme's font (Tidal Pixel) arrives after the switch
       window.addEventListener('mousedown', () => { store.ctx = null; });
       // A clicked button shouldn't keep focus: keyboard shortcuts (L/R, arrows) would then paint the focus ring on it.
       // (detail > 0 = mouse click; keyboard-activated buttons keep focus.)
@@ -188,7 +215,7 @@
         sent.catch(err => store.toast(err.message, 'error'));
       });
 
-      return { store, TABS, isHome, title, clock, cycle, back, pageRef, pageEl, tabIndex };
+      return { store, TABS, isHome, title, clock, cycle, back, pageRef, pageEl, tabIndex, tabsEl };
     },
     template: `
       <component v-if="store.booted && isHome" :is="'page-home'" ref="pageRef" :store="store"></component>
@@ -198,15 +225,16 @@
           <div class="band">
             <h1 :key="title">{{ title }}</h1>
             <button class="shoulder" title="Previous section ( [ )" @click="cycle(-1)">L</button>
-            <nav class="tabs">
-              <button v-for="t in TABS" :key="t.key" class="tab" :class="{ on: store.view === t.key }" @click="store.go(t.key)">
-                <t-icon :name="t.icon"></t-icon>{{ t.label }}
+            <nav class="tabs" ref="tabsEl">
+              <button v-for="t in TABS" :key="t.key" class="tab" :class="{ on: store.view === t.key }" :title="t.label" @click="store.go(t.key)">
+                <t-icon :name="t.icon"></t-icon><span class="tab-label">{{ t.label }}</span>
               </button>
             </nav>
             <button class="shoulder" title="Next section ( ] )" @click="cycle(1)">R</button>
           </div>
           <div class="status">
             <div class="status-icon" v-if="store.save?.edited" title="Unsaved changes"><t-icon name="save"></t-icon></div>
+            <t-game-badge :save="store.save"></t-game-badge>
             <div class="clock">{{ clock }}</div>
           </div>
         </header>
@@ -246,6 +274,7 @@
     app.component('t-number', C.TNumber);
     app.component('t-text', C.TText);
     app.component('t-fields', C.TFields);
+    app.component('t-game-badge', C.TGameBadge);
     app.component('t-modal', C.TModal);
     app.component('t-dialog', C.TDialog);
     app.component('t-tool', C.TTool);
@@ -263,6 +292,7 @@
     else {
       store.save = data.save; store.recent = data.recent ?? []; store.settings = data.settings ?? store.settings; store.version = data.version;
       fx.setReduced(store.settings.reducedMotion);
+      store.applyTheme(store.settings.theme);
     }
     // boot screen out
     if (window.anime && !fx.reduced) {

@@ -79,7 +79,7 @@ internal sealed partial class WebApi
             DexCaught = z.DexCaught,
             Size = z.Size,
             Modified = z.Modified.ToString("s"),
-            Icons = GetGameIcons(z.Version, z.Language).Select(n => $"img/games/pokemon-{n}.png").ToList(),
+            Icons = GetGameIconUrls(z.Version, z.Language),
             Party = z.Party,
             Loaded = string.Equals(path, current, StringComparison.OrdinalIgnoreCase),
             Note = z.Note,
@@ -249,6 +249,9 @@ internal sealed partial class WebApi
         [SV] = [SL, VL],
         [CXD] = [COLO, XD],
     };
+
+    internal static List<string> GetGameIconUrls(GameVersion version, int language)
+        => GetGameIcons(version, language).Select(n => $"img/games/pokemon-{n}.png").ToList();
 
     /// <summary> Box art in wwwroot/img/games (pokemon-{name}.png); saves that can't tell a pair apart get both. </summary>
     private static string[] GetGameIcons(GameVersion version, int language) => version switch

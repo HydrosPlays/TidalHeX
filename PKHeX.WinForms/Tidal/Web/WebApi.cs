@@ -350,6 +350,7 @@ internal sealed partial class WebApi
             Loaded = true,
             Blank = !sav.State.Exportable,
             Game = GetGameName(sav.Version, sav.Language),
+            Icons = GetGameIconUrls(sav.Version, sav.Language),
             Version = (int)sav.Version,
             Generation = sav.Generation,
             Context = sav.Context.ToString(),
@@ -427,9 +428,20 @@ internal sealed partial class WebApi
     public static UiSettings GetUiSettings() => new()
     {
         ReducedMotion = Settings.Startup.TidalReduceMotion,
+        Theme = GetThemeName(Settings.Startup.TidalUITheme),
         HideSecrets = Settings.Privacy.HideSecretDetails,
         EncountersInGameOnly = Settings.EncounterDb.FilterUnavailableSpecies,
         GiftsInGameOnly = Settings.MysteryDb.FilterUnavailableSpecies,
+    };
+
+    /// <summary> The theme's name in the page (data-theme, UiSettings.Theme). </summary>
+    internal static string GetThemeName(TidalUITheme theme) => theme switch
+    {
+        TidalUITheme.Dark => "dark",
+        TidalUITheme.PSS => "pss",
+        TidalUITheme.ZA => "za",
+        TidalUITheme.Pixel => "pixel",
+        _ => "light",
     };
 
     private const uint SPI_GETCLIENTAREAANIMATION = 0x1042;

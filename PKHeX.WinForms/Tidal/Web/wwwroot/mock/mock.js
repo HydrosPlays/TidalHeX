@@ -130,12 +130,13 @@ window.TidalMock = (() => {
   ];
 
   const delay = v => new Promise(r => setTimeout(() => r(v), 60 + Math.random() * 120));
-  const mockSettings = { reducedMotion: false, hideSecrets: false, encountersInGameOnly: true, giftsInGameOnly: true };
+  const mockSettings = { reducedMotion: false, hideSecrets: false, encountersInGameOnly: true, giftsInGameOnly: true, theme: 'light' };
 
   async function call(method, args, emit) {
     switch (method) {
       case 'app.init': return delay({ version: 'dev', save, recent: [{ path: save.filePath, name: 'main', folder: 'Scarlet', exists: true }, { path: 'C:\\Saves\\Emerald.sav', name: 'Emerald.sav', folder: 'Saves', exists: true }, { path: 'C:\\Saves\\HGSS.sav', name: 'HGSS.sav', folder: 'Saves', exists: true }], settings: mockSettings });
       case 'app.setOption': mockSettings[args.name] = args.value; return delay({ ...mockSettings });
+      case 'app.setTheme': mockSettings.theme = args.theme; return delay({ ...mockSettings });
       case 'box.get': { const b = args.box; return delay({ box: b, name: `Box ${b + 1}`, boxCount, wallpaper: '', slots: boxes[b] }); }
       case 'box.party': return delay({ slots: party });
       case 'box.move': {

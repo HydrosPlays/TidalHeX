@@ -136,7 +136,7 @@ img.sprite { image-rendering: var(--sprite-render); }
 .band h1 { margin: 0; font-family: var(--font-display); font-size: 24px; font-weight: 400; letter-spacing: .04em; color: var(--cyan); text-transform: uppercase; white-space: nowrap; }
 
 /* ---------- App (inner pages) frame ---------- */
-.app { position: relative; z-index: 1; height: 100vh; display: grid; grid-template-rows: var(--head-h) 1fr var(--foot-h); }
+.app { position: relative; z-index: 1; height: 100vh; display: grid; grid-template-rows: var(--head-h) 1fr var(--foot-h); grid-template-columns: minmax(0, 1fr); }
 .page-host { position: relative; overflow: hidden; }
 
 .header { display: flex; align-items: center; gap: 18px; padding: 18px 30px 0 0; }
@@ -148,6 +148,9 @@ img.sprite { image-rendering: var(--sprite-render); }
   transition: color .2s, background .2s, box-shadow .25s;
 }
 .tab svg { width: 18px; height: 18px; }
+/* Too narrow for every label (app.js fitTabs): the other tabs show only their icon. */
+.tabs.compact .tab:not(.on) { padding: 0 11px; }
+.tabs.compact .tab:not(.on) .tab-label { display: none; }
 .tab:hover { color: #fff; background: rgba(255, 255, 255, .12); }
 .tab.on { color: var(--navy); background: #fff; box-shadow: 0 0 0 3px var(--cyan-ring), 0 0 20px rgba(95, 242, 255, .7); }
 .shoulder { height: 26px; min-width: 30px; padding: 0 8px; border-radius: 8px 8px 8px 8px; background: rgba(255, 255, 255, .92); color: var(--navy); font-weight: 800; font-size: 12px; display: inline-grid; place-items: center; cursor: pointer; border: 0; }
@@ -155,6 +158,15 @@ img.sprite { image-rendering: var(--sprite-render); }
 .clock { font-family: var(--font-display); font-size: 25px; font-weight: 400; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
 .status-icon { display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 500; }
 .status-icon svg { width: 22px; height: 22px; }
+/* The loaded game's box art, left of the clock (pops in when another game is loaded). */
+.game-badge { position: relative; width: 40px; height: 40px; flex: none; margin-right: -4px; animation: badge-in .35s var(--ease); }
+.game-badge img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 10px; box-shadow: 0 4px 12px -3px rgba(0, 12, 40, .6), 0 0 0 1.5px rgba(255, 255, 255, .6); }
+.game-badge.pair img { width: 72%; height: 72%; border-radius: 8px; }
+.game-badge.pair img.n0 { inset: 0 auto auto 0; }
+.game-badge.pair img.n1 { inset: auto 0 0 auto; }
+.launcher .game-badge { width: 50px; height: 50px; }
+.reduced .game-badge { animation: none; }
+@keyframes badge-in { from { opacity: 0; transform: scale(.7); } }
 
 /* Footer (Back · Home · hints) */
 .footer { position: relative; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 30px; }
@@ -368,9 +380,6 @@ img.sprite { image-rendering: var(--sprite-render); }
   box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .6) inset, 0 0 60px rgba(180, 245, 255, .55), 0 20px 40px -20px rgba(0, 30, 80, .5);
   backdrop-filter: blur(10px);
 }
-.dock::before, .dock::after { content: ""; position: absolute; top: 18%; bottom: 18%; width: 60px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, .55); }
-.dock::before { left: -34px; border-right: 0; border-radius: 999px 0 0 999px; }
-.dock::after { right: -34px; border-left: 0; border-radius: 0 999px 999px 0; }
 .dock-btn { position: relative; width: 70px; height: 70px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; background: radial-gradient(circle at 45% 35%, #505866, #3a414c); color: var(--c, #fff); box-shadow: 0 8px 16px -6px rgba(0, 20, 50, .55), inset 0 1px 0 rgba(255, 255, 255, .18); transition: transform .2s var(--ease), box-shadow .2s; }
 .dock-btn svg { width: 30px; height: 30px; }
 .dock-btn:hover, .dock-btn.sel { transform: translateY(-3px); box-shadow: var(--ring); }
@@ -446,6 +455,10 @@ img.sprite { image-rendering: var(--sprite-render); }
 .round-toggle.on.male { color: var(--male); }
 .round-toggle.on.female { color: var(--female); }
 .round-toggle img { width: 26px; height: 26px; image-rendering: var(--sprite-render); }
+/* Egg: PKHeX's egg sprite, greyed out until the Pokémon is an egg. */
+.round-toggle.egg img { object-fit: contain; filter: grayscale(1) brightness(.8); opacity: .5; transition: filter .2s, opacity .2s; }
+.round-toggle.egg:hover img { opacity: .75; }
+.round-toggle.egg.on img { filter: none; opacity: 1; }
 .legal-card { margin-top: 16px; width: 100%; padding: 12px 14px; border-radius: 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; transition: transform .2s var(--ease); border: 1.5px solid transparent; }
 .legal-card:hover { transform: translateY(-2px); }
 .legal-card.ok { background: rgba(77, 255, 169, .16); border-color: rgba(77, 255, 169, .55); }
@@ -802,8 +815,8 @@ img.sprite { image-rendering: var(--sprite-render); }
 /* Boot screen (reference: rotom-dex lock screen) */
 .boot { position: fixed; inset: 0; z-index: 4000; display: grid; grid-template-rows: 1fr auto; overflow: hidden; }
 .boot .center { display: grid; place-items: center; align-content: center; }
-.boot img { width: 210px; height: 210px; filter: drop-shadow(0 0 40px rgba(170, 250, 255, .9)); }
-.boot h1 { margin: 18px 0 0; font-family: var(--font-display); font-size: 38px; font-weight: 300; letter-spacing: .12em; text-align: center; text-transform: uppercase; }
+/* The full logo with its wordmark (img/logo-full.webp, 4:3). */
+.boot img { width: min(460px, 60vw); height: auto; aspect-ratio: 4 / 3; filter: drop-shadow(0 0 40px rgba(170, 250, 255, .7)); }
 .boot .foot { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 46px 30px; font-size: 18px; }
 .boot .dots { display: flex; gap: 14px; justify-content: flex-end; margin-top: 8px; }
 .boot .dots i { width: 11px; height: 11px; border-radius: 50%; border: 2px solid #fff; }
@@ -817,3 +830,438 @@ img.sprite { image-rendering: var(--sprite-render); }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 .reduced * { transition: none !important; }
+
+/* ---------- Settings: theme picker ---------- */
+.theme-row { flex-wrap: wrap; }
+.theme-picker { display: flex; flex-wrap: wrap; gap: 10px; flex: 1 1 100%; padding-left: 60px; }
+.theme-opt { display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; border-radius: 16px; cursor: pointer; color: #fff; font-weight: 600; font-size: 13px;
+  border: 1.5px solid rgba(255, 255, 255, .25); background: rgba(4, 38, 96, .35); transition: border-color .2s, box-shadow .2s, background .2s; }
+.theme-opt:hover { border-color: #fff; background: rgba(255, 255, 255, .12); }
+.theme-opt.on { border-color: #fff; box-shadow: 0 0 0 3px var(--cyan-ring), 0 0 18px rgba(95, 242, 255, .55); }
+.theme-opt svg { width: 16px; height: 16px; color: var(--cyan); }
+/* A miniature of each theme: its sea, a panel and a tile. */
+.theme-swatch { position: relative; width: 58px; height: 38px; border-radius: 10px; overflow: hidden; flex: none; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .35); }
+.theme-swatch i { position: absolute; border-radius: 4px; }
+.theme-swatch i:nth-child(1) { inset: 0; border-radius: 0; }
+.theme-swatch i:nth-child(2) { left: 6px; top: 7px; width: 28px; height: 24px; }
+.theme-swatch i:nth-child(3) { right: 6px; top: 7px; width: 14px; height: 14px; background: linear-gradient(150deg, #ff9a5a, #ff5d7a 55%, #c2388f); }
+.theme-swatch.light i:nth-child(1) { background: linear-gradient(162deg, #46e1f8, #1590e2 55%, #0b47bb); }
+.theme-swatch.light i:nth-child(2) { background: rgba(8, 70, 150, .5); box-shadow: inset 0 0 0 1px rgba(170, 242, 255, .5); }
+.theme-swatch.dark i:nth-child(1) { background: linear-gradient(162deg, #0f3459, #071b38 55%, #020a18); }
+.theme-swatch.dark i:nth-child(2) { background: rgba(14, 40, 82, .85); box-shadow: inset 0 0 0 1px rgba(126, 244, 255, .35); }
+@media (max-width: 900px) { .theme-picker { padding-left: 0; } .theme-opt { flex: 1; } }
+
+/* ==========================================================================
+   Tidal Dark: the same design on a deep night-time sea. Panels, bands and insets follow the variables; the few
+   bright surfaces that don't (the dock tray, avatars, the sea's glows) are overridden here. Accents stay cyan.
+   ========================================================================== */
+:root[data-theme="dark"] {
+  --sky-1: #0f3459;
+  --sky-2: #0b2a4c;
+  --sky-3: #08203f;
+  --sky-4: #061731;
+  --sky-5: #030d20;
+  --navy: #041431;
+  --navy-2: #020b1f;
+
+  --text-soft: rgba(235, 248, 255, .84);
+  --text-muted: rgba(205, 232, 250, .64);
+  --text-faint: rgba(205, 232, 250, .42);
+
+  --band: rgba(2, 12, 32, .62);
+  --screen: linear-gradient(180deg, rgba(14, 40, 82, .7), rgba(7, 22, 52, .8));
+  --screen-border: rgba(126, 244, 255, .2);
+  --inset: rgba(1, 8, 24, .55);
+  --inset-hover: rgba(8, 26, 60, .7);
+  --inset-border: rgba(126, 244, 255, .16);
+
+  --ring: 0 0 0 3px #ffffff, 0 0 0 7px var(--cyan-ring), 0 0 30px rgba(95, 242, 255, .6);
+  --shadow: 0 22px 44px -22px rgba(0, 0, 0, .85);
+  color-scheme: dark;
+}
+[data-theme="dark"] .backdrop .sea {
+  background:
+    radial-gradient(900px 600px at 8% -10%, rgba(40, 190, 255, .22), transparent 60%),
+    radial-gradient(1000px 700px at 100% 110%, rgba(70, 50, 200, .3), transparent 60%),
+    linear-gradient(162deg, var(--sky-1) 0%, var(--sky-2) 22%, var(--sky-3) 48%, var(--sky-4) 74%, var(--sky-5) 100%);
+}
+[data-theme="dark"] .backdrop .grid {
+  background-image:
+    linear-gradient(rgba(140, 220, 255, .05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(140, 220, 255, .05) 1px, transparent 1px);
+}
+[data-theme="dark"] .backdrop .shine { opacity: .2; }
+[data-theme="dark"] .backdrop svg { opacity: .55; }
+[data-theme="dark"] .backdrop canvas { opacity: .6; }
+
+[data-theme="dark"] .footer::before { background: rgba(126, 244, 255, .25); }
+[data-theme="dark"] .band::before { box-shadow: inset 0 1px 0 rgba(126, 244, 255, .18); }
+[data-theme="dark"] .dock {
+  background: linear-gradient(180deg, rgba(40, 90, 150, .4), rgba(12, 34, 74, .5));
+  box-shadow: 0 0 0 1.5px rgba(126, 244, 255, .3) inset, 0 0 50px rgba(40, 170, 255, .22), 0 20px 40px -20px rgba(0, 0, 0, .7);
+}
+[data-theme="dark"] .avatar { background: radial-gradient(circle at 38% 30%, #eef8ff, #cfe6f8 55%, #8fb7d8); box-shadow: 0 0 0 3px #d9efff, 0 6px 14px rgba(0, 0, 0, .55); }
+[data-theme="dark"] .avatar.empty { background: rgba(126, 244, 255, .06); box-shadow: 0 0 0 2px rgba(126, 244, 255, .3); }
+[data-theme="dark"] .tile { box-shadow: 0 16px 34px -16px rgba(0, 0, 0, .8); }
+[data-theme="dark"] .tile::after { background: radial-gradient(circle at 78% 18%, rgba(255, 255, 255, .22), transparent 52%); }
+[data-theme="dark"] .dropdown { background: rgba(6, 20, 48, .97); border-color: rgba(126, 244, 255, .35); }
+[data-theme="dark"] .modal-back { background: rgba(0, 6, 20, .55); }
+[data-theme="dark"] .modal pre { background: rgba(1, 8, 24, .6); }
+[data-theme="dark"] .slot { background: rgba(140, 220, 255, .06); border-color: rgba(140, 220, 255, .12); }
+[data-theme="dark"] .slot:hover { background: rgba(140, 220, 255, .14); border-color: rgba(126, 244, 255, .5); }
+[data-theme="dark"] .boot img { filter: drop-shadow(0 0 40px rgba(60, 200, 255, .6)); }
+/* Box wallpapers are drawn for light screens (Sword/Shield's is nearly white): dimmer and darker here. */
+[data-theme="dark"] .box-stage { background: rgba(1, 8, 24, .45); }
+[data-theme="dark"] .box-stage .wall { opacity: .22; filter: brightness(.55) saturate(.9); }
+.theme-swatch.pss i:nth-child(1) { background: repeating-linear-gradient(120deg, #ffd84a 0 6px, #ffcb2e 6px 12px); }
+.theme-swatch.pss i:nth-child(2) { background: linear-gradient(180deg, #c4682c, #a6521e); box-shadow: inset 0 0 0 1px #6e300c; }
+.theme-swatch.pss i:nth-child(3) { background: #16357f; border-radius: 50%; }
+
+/* ==========================================================================
+   Tidal PSS: the colors of X/Y and Omega Ruby/Alpha Sapphire's Player Search System screen. A sunny yellow,
+   striped background; orange panels with a brown edge and white text; navy bars along the top and bottom; navy
+   controls and a navy/white selection cursor. Text that sits right on the yellow turns navy.
+   ========================================================================== */
+:root[data-theme="pss"] {
+  /* The sea is drawn yellow below; --sky-4/5 double as the text color on white pills, so they stay navy. */
+  --sky-1: #ffe970;
+  --sky-2: #ffda45;
+  --sky-3: #ffcb30;
+  --sky-4: #1d47b8;
+  --sky-5: #12307c;
+  --navy: #12307c;
+  --navy-2: #0b2160;
+  --cyan: #fff0bf;
+  --cyan-2: #ffe08a;
+  --cyan-ring: #2b5fe0;
+
+  --text-soft: rgba(255, 249, 236, .94);
+  --text-muted: rgba(255, 238, 206, .86);
+  --text-faint: rgba(255, 232, 196, .66);
+
+  --band: linear-gradient(180deg, #2449aa, #13317f);
+  /* Burnt orange (deeper and less saturated than the PSS bars' highlight) so white text reads well. */
+  --screen: linear-gradient(180deg, rgba(196, 104, 44, .97), rgba(166, 82, 30, .98));
+  --screen-border: rgba(110, 48, 12, .85);
+  --inset: rgba(84, 34, 6, .36);
+  --inset-hover: rgba(100, 42, 10, .48);
+  --inset-border: rgba(255, 224, 170, .5);
+
+  --ring: 0 0 0 3px #ffffff, 0 0 0 6px #1d47b8, 0 0 18px rgba(20, 50, 150, .55);
+  --ring-soft: 0 0 0 2px #ffffff, 0 0 0 5px rgba(29, 71, 184, .85), 0 0 14px rgba(20, 50, 150, .45);
+  --shadow: 0 18px 36px -20px rgba(110, 50, 0, .7);
+  color-scheme: light;
+}
+
+/* Background: sunny yellow with PSS's soft diagonal stripes. */
+[data-theme="pss"] body { background: var(--sky-3); }
+[data-theme="pss"] .backdrop .sea {
+  background:
+    radial-gradient(900px 600px at 10% -10%, rgba(255, 255, 220, .6), transparent 60%),
+    radial-gradient(900px 700px at 100% 110%, rgba(255, 150, 20, .35), transparent 60%),
+    linear-gradient(162deg, #ffe970 0%, #ffda45 25%, #ffcb30 50%, #ffb926 78%, #f7a21e 100%);
+}
+[data-theme="pss"] .backdrop .grid {
+  background-image: repeating-linear-gradient(120deg, rgba(255, 255, 255, .16) 0 26px, rgba(255, 255, 255, 0) 26px 60px);
+  background-size: auto;
+  mask-image: none;
+}
+[data-theme="pss"] .backdrop .shine { opacity: .35; }
+[data-theme="pss"] .backdrop svg { opacity: .45; }
+[data-theme="pss"] .backdrop canvas { opacity: .5; }
+
+/* Panels: orange bars with a brown edge, like the PSS lists. */
+[data-theme="pss"] .screen {
+  box-shadow: var(--shadow), inset 0 1.5px 0 rgba(255, 214, 160, .5), inset 0 -2px 0 rgba(90, 36, 6, .4);
+  text-shadow: 0 1px 1px rgba(110, 40, 0, .35);
+}
+[data-theme="pss"] .screen.dark { background: linear-gradient(180deg, rgba(172, 86, 32, .98), rgba(144, 68, 22, .98)); }
+[data-theme="pss"] .card-title, [data-theme="pss"] .section-title { color: #fff6d6; }
+[data-theme="pss"] .section-title::after { background: linear-gradient(90deg, rgba(255, 240, 200, .7), transparent); }
+
+/* Navy bars across the top and bottom (the PSS frame). */
+[data-theme="pss"] .app .header { background: linear-gradient(180deg, #2a51b6, #13317f); box-shadow: 0 3px 0 #0a1f5a, 0 10px 20px -10px rgba(10, 30, 90, .6); padding-bottom: 10px; }
+[data-theme="pss"] .app .header .band::before, [data-theme="pss"] .app .header .band::after { background: transparent; box-shadow: none; }
+[data-theme="pss"] .band h1 { color: #8fe3ff; }
+[data-theme="pss"] .footer { background: linear-gradient(180deg, #1f43a0, #0f2a70); box-shadow: 0 -3px 0 #0a1f5a; }
+[data-theme="pss"] .footer::before { display: none; }
+[data-theme="pss"] .launcher .title-band .band::before { box-shadow: 0 3px 0 #0a1f5a; }
+[data-theme="pss"] .launcher .clock, [data-theme="pss"] .launcher .status-icon { color: #12307c; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
+
+/* Navy controls (PSS buttons), so they read on orange and yellow alike. */
+[data-theme="pss"] .btn, [data-theme="pss"] .chip, [data-theme="pss"] .segmented, [data-theme="pss"] .tri, [data-theme="pss"] .theme-opt { background: rgba(20, 46, 124, .88); border-color: rgba(255, 255, 255, .55); text-shadow: none; }
+[data-theme="pss"] .btn:hover, [data-theme="pss"] .theme-opt:hover { background: rgba(32, 64, 160, .95); }
+[data-theme="pss"] .btn.primary, [data-theme="pss"] .chip.on { background: #fff; color: var(--navy); }
+[data-theme="pss"] .switch .track { background: rgba(20, 46, 124, .85); }
+[data-theme="pss"] .switch.on .track { background: #2b8cff; box-shadow: 0 0 10px rgba(40, 120, 255, .6); }
+[data-theme="pss"] .slider { background: rgba(122, 46, 0, .4); }
+[data-theme="pss"] .dropdown { background: rgba(16, 40, 112, .97); border-color: rgba(255, 255, 255, .6); }
+[data-theme="pss"] .tile-arrow { background: rgba(20, 46, 124, .9); }
+/* Labels (encounter types, legality, shiny...): navy pills with their colored text, like PSS's name tags. */
+[data-theme="pss"] .pill:not(.solid) { background: rgba(16, 40, 112, .9); text-shadow: none; }
+
+/* Home: navy dock tray and footer strip; avatars keep their white discs. */
+[data-theme="pss"] .dock {
+  background: linear-gradient(180deg, #2a51b6, #13317f);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .55) inset, 0 4px 0 #0a1f5a, 0 20px 36px -18px rgba(90, 40, 0, .6);
+}
+[data-theme="pss"] .avatar.empty { background: rgba(255, 255, 255, .3); box-shadow: 0 0 0 2px rgba(255, 255, 255, .8); }
+[data-theme="pss"] .tile { box-shadow: 0 0 0 2px rgba(120, 50, 0, .35), 0 16px 30px -16px rgba(110, 50, 0, .7); }
+
+/* Insides of panels: warm, see-through brown instead of the sea's navy. */
+[data-theme="pss"] .box-stage { background: rgba(122, 46, 0, .28); }
+[data-theme="pss"] .box-stage .wall { opacity: .25; }
+[data-theme="pss"] .stat-table tr.srow td { background: rgba(122, 46, 0, .26); }
+[data-theme="pss"] .modal pre, [data-theme="pss"] .dialog pre { background: rgba(110, 40, 0, .38); }
+[data-theme="pss"] .modal-back { background: rgba(90, 40, 0, .35); }
+[data-theme="pss"] .dropzone { background: rgba(255, 160, 30, .45); }
+
+/* Loading screen: on the yellow, so navy text. */
+[data-theme="pss"] .boot { color: #12307c; }
+[data-theme="pss"] .boot .dots i { border-color: #12307c; }
+[data-theme="pss"] .boot img { filter: drop-shadow(0 6px 18px rgba(140, 70, 0, .5)); }
+[data-theme="pss"] .save-tag { background: rgba(16, 40, 112, .9); text-shadow: none; }
+[data-theme="pss"] .save-tag.lang { color: #8fe3ff; box-shadow: inset 0 0 0 1px rgba(143, 227, 255, .6); }
+[data-theme="pss"] .save-trainer .g.m { color: #163fa8; text-shadow: none; }
+[data-theme="pss"] .save-trainer .g.f { color: #c8186a; text-shadow: none; }
+[data-theme="pss"] .save-tag.open { background: #fff0bf; color: #12307c; }
+.theme-swatch.za i:nth-child(1) { background: radial-gradient(circle at 85% 50%, rgba(120, 30, 20, .7), transparent 60%), radial-gradient(circle, rgba(120, 236, 160, .7) 0 .6px, transparent 1px) 0 0 / 4px 4px, #0b100f; }
+.theme-swatch.za i:nth-child(2) { background: rgba(58, 72, 104, .9); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }
+.theme-swatch.za i:nth-child(3) { background: none; border: 1.5px solid #a6f07c; border-radius: 2px; transform: rotate(8deg); }
+
+/* ==========================================================================
+   Tidal ZA: Pokémon Legends: Z-A. The title screen's near-black backdrop (teal on the left, a maroon glow on the
+   right) with green data dots and floating squares (fx.js), and the game's menus: frosted slate panels, white title
+   tabs, white "selected" cards with a lime marker, lime accents, and a condensed DIN-style font (Bahnschrift).
+   ========================================================================== */
+:root[data-theme="za"] {
+  --sky-4: #232b3d;  /* text on white pills */
+  --sky-5: #161c2a;
+  --navy: #161c2a;
+  --navy-2: #0d111b;
+  --cyan: #a6f07c;
+  --cyan-2: #7fe08a;
+  --cyan-ring: #a6f07c;
+
+  --text-soft: rgba(240, 244, 250, .88);
+  --text-muted: rgba(215, 224, 238, .68);
+  --text-faint: rgba(215, 224, 238, .45);
+
+  --band: rgba(28, 35, 52, .82);
+  --screen: linear-gradient(180deg, rgba(64, 78, 112, .74), rgba(42, 54, 82, .8));
+  --screen-border: rgba(255, 255, 255, .14);
+  --inset: rgba(20, 26, 40, .5);
+  --inset-hover: rgba(28, 36, 54, .62);
+  --inset-border: rgba(255, 255, 255, .12);
+
+  --ring: 0 0 0 3px #ffffff, 0 0 0 6px rgba(166, 240, 124, .9), 0 0 24px rgba(166, 240, 124, .4);
+  --ring-soft: 0 0 0 2px #ffffff, 0 0 0 4px rgba(166, 240, 124, .75), 0 0 16px rgba(166, 240, 124, .3);
+  --shadow: 0 22px 44px -22px rgba(0, 0, 0, .85);
+  --r-lg: 22px;
+
+  --font: "Bahnschrift", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Bahnschrift", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+[data-theme="za"] body { background: #0b0f0f; font-stretch: 90%; }
+
+/* Backdrop: the title screen. */
+[data-theme="za"] .backdrop .sea {
+  background:
+    radial-gradient(1100px 760px at 92% 38%, rgba(118, 30, 22, .55), transparent 64%),
+    radial-gradient(900px 700px at 0% 25%, rgba(16, 78, 66, .4), transparent 60%),
+    radial-gradient(700px 500px at 45% 60%, rgba(40, 46, 44, .35), transparent 70%),
+    linear-gradient(110deg, #07100f 0%, #0b0d0c 55%, #150a08 100%);
+}
+/* Green data dots in loose columns (still; fx.js adds falling streams on the home screen). */
+[data-theme="za"] .backdrop .grid {
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(120, 236, 160, .5) 0 1px, transparent 1.6px);
+  background-size: 8px 8px;
+  -webkit-mask-image:
+    repeating-linear-gradient(90deg, transparent 0 56px, #000 56px 72px, transparent 72px 128px, rgba(0, 0, 0, .55) 128px 136px, transparent 136px 200px, rgba(0, 0, 0, .8) 200px 224px, transparent 224px 300px),
+    linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, .6) 30%, rgba(0, 0, 0, .35) 60%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  opacity: .55;
+}
+[data-theme="za"] .backdrop .shine { display: none; }
+[data-theme="za"] .backdrop canvas { opacity: .9; }
+
+/* Title tabs and bands: dark slate bars with bold white condensed titles and a lime marker. */
+[data-theme="za"] .band::before { box-shadow: inset 0 -2px 0 rgba(166, 240, 124, .55); }
+[data-theme="za"] .band h1 { color: #fff; font-weight: 700; font-stretch: 85%; letter-spacing: .08em; padding-left: 12px; border-left: 4px solid var(--cyan); line-height: 1; }
+[data-theme="za"] .tab.on { color: var(--navy); background: #fff; box-shadow: inset 4px 0 0 var(--cyan), 0 0 0 2px rgba(166, 240, 124, .55); }
+[data-theme="za"] .shoulder { background: #fff; color: var(--navy); }
+[data-theme="za"] .card-title, [data-theme="za"] .section-title { color: #fff; font-stretch: 85%; letter-spacing: .1em; }
+[data-theme="za"] .section-title::after { background: linear-gradient(90deg, rgba(166, 240, 124, .6), transparent); }
+[data-theme="za"] .footer::before { background: rgba(255, 255, 255, .22); }
+
+/* Panels: frosted slate, a little squarer. */
+[data-theme="za"] .screen { box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, .14); }
+[data-theme="za"] .screen.dark { background: linear-gradient(180deg, rgba(36, 46, 70, .82), rgba(24, 32, 50, .88)); }
+[data-theme="za"] .dropdown { background: rgba(30, 38, 58, .97); border-color: rgba(255, 255, 255, .3); }
+[data-theme="za"] .btn, [data-theme="za"] .chip, [data-theme="za"] .segmented, [data-theme="za"] .tri { background: rgba(22, 28, 44, .6); border-color: rgba(255, 255, 255, .3); }
+[data-theme="za"] .btn.primary, [data-theme="za"] .chip.on { background: #fff; color: var(--navy); border-color: #fff; }
+[data-theme="za"] .switch.on .track { background: #7fd85e; box-shadow: 0 0 12px rgba(166, 240, 124, .55); }
+[data-theme="za"] .slot { background: rgba(70, 84, 116, .45); border-color: rgba(255, 255, 255, .1); }
+[data-theme="za"] .slot:hover { background: rgba(90, 106, 142, .6); border-color: rgba(255, 255, 255, .55); }
+[data-theme="za"] .box-stage { background: rgba(20, 26, 40, .35); }
+[data-theme="za"] .box-stage .wall { opacity: .18; filter: brightness(.6); }
+[data-theme="za"] .modal-back { background: rgba(4, 6, 10, .55); }
+[data-theme="za"] .modal pre, [data-theme="za"] .dialog pre { background: rgba(14, 18, 28, .6); }
+
+/* Menu items (home tiles, Save Tools): slate cards that turn white with dark text when picked, like the Z-A menu. */
+[data-theme="za"] .tile { background: linear-gradient(180deg, rgba(70, 86, 122, .82), rgba(46, 58, 88, .88)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 16px 34px -16px rgba(0, 0, 0, .8); }
+[data-theme="za"] .tile::after { background: none; }
+[data-theme="za"] .tile::before { content: ""; position: absolute; left: 0; top: 18px; bottom: 18px; width: 0; background: var(--cyan); border-radius: 0 4px 4px 0; transition: width .2s var(--ease); z-index: 2; }
+[data-theme="za"] .tile:hover, [data-theme="za"] .tile.sel { background: #fff; color: var(--navy); transform: scale(1.03); box-shadow: 0 0 0 2px rgba(166, 240, 124, .8), 0 26px 50px -18px rgba(0, 0, 0, .8); }
+[data-theme="za"] .tile:hover::before, [data-theme="za"] .tile.sel::before { width: 6px; }
+[data-theme="za"] .tile:hover h3, [data-theme="za"] .tile.sel h3 { color: var(--navy); text-shadow: none; }
+[data-theme="za"] .tile:hover p, [data-theme="za"] .tile.sel p { color: #3d4760; }
+[data-theme="za"] .tile:hover .art, [data-theme="za"] .tile.sel .art { color: var(--navy); filter: none; }
+[data-theme="za"] .tile h3 { font-weight: 700; font-stretch: 85%; letter-spacing: .02em; }
+[data-theme="za"] .tool:hover { background: #fff; color: var(--navy); box-shadow: inset 5px 0 0 var(--cyan), 0 0 0 2px rgba(166, 240, 124, .6); }
+[data-theme="za"] .tool:hover small { color: #3d4760; }
+[data-theme="za"] .tool.off:hover { background: rgba(255, 255, 255, .1); color: #fff; box-shadow: none; }
+
+/* Home: a dark glass dock and white avatar discs. */
+[data-theme="za"] .dock { background: linear-gradient(180deg, rgba(56, 70, 102, .6), rgba(28, 36, 56, .7)); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .22) inset, 0 20px 40px -20px rgba(0, 0, 0, .8); }
+[data-theme="za"] .avatar.empty { background: rgba(255, 255, 255, .06); box-shadow: 0 0 0 2px rgba(255, 255, 255, .3); }
+[data-theme="za"] .launcher .title-band .band h1 { font-size: 26px; }
+[data-theme="za"] .boot img { filter: drop-shadow(0 0 34px rgba(120, 236, 160, .35)); }
+
+/* ==========================================================================
+   Tidal Pixel: the Game Boy / Game Boy Advance games (Gold/Silver, Ruby/Sapphire/Emerald, FireRed/LeafGreen).
+   A light-blue background of stair-stepped stripes that scrolls on the home screen, flat dark-blue boxes with a
+   two-tone pixel frame and a hard shadow (no blur, square corners), white "selected" boxes with a cursor arrow, an
+   orange-red cursor box, and Tidal Pixel, TidalHeX's own pixel font (Assets/PixelFont), for titles and labels.
+   The font is drawn on a 7-unit grid: crisp at 14px, 21px and 28px.
+   ========================================================================== */
+@font-face { font-family: "Tidal Pixel"; src: url("../fonts/tidal-pixel.ttf") format("truetype"); font-display: block; }
+
+.theme-swatch.pixel i:nth-child(1) { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='%2370c0ec'/%3E%3Cg fill='%2362b2e2'%3E%3Crect x='0' y='0' width='1' height='1'/%3E%3Crect x='1' y='0' width='1' height='1'/%3E%3Crect x='2' y='0' width='1' height='1'/%3E%3Crect x='3' y='0' width='1' height='1'/%3E%3Crect x='0' y='1' width='1' height='1'/%3E%3Crect x='1' y='1' width='1' height='1'/%3E%3Crect x='2' y='1' width='1' height='1'/%3E%3Crect x='7' y='1' width='1' height='1'/%3E%3Crect x='0' y='2' width='1' height='1'/%3E%3Crect x='1' y='2' width='1' height='1'/%3E%3Crect x='6' y='2' width='1' height='1'/%3E%3Crect x='7' y='2' width='1' height='1'/%3E%3Crect x='0' y='3' width='1' height='1'/%3E%3Crect x='5' y='3' width='1' height='1'/%3E%3Crect x='6' y='3' width='1' height='1'/%3E%3Crect x='7' y='3' width='1' height='1'/%3E%3Crect x='4' y='4' width='1' height='1'/%3E%3Crect x='5' y='4' width='1' height='1'/%3E%3Crect x='6' y='4' width='1' height='1'/%3E%3Crect x='7' y='4' width='1' height='1'/%3E%3Crect x='3' y='5' width='1' height='1'/%3E%3Crect x='4' y='5' width='1' height='1'/%3E%3Crect x='5' y='5' width='1' height='1'/%3E%3Crect x='6' y='5' width='1' height='1'/%3E%3Crect x='2' y='6' width='1' height='1'/%3E%3Crect x='3' y='6' width='1' height='1'/%3E%3Crect x='4' y='6' width='1' height='1'/%3E%3Crect x='5' y='6' width='1' height='1'/%3E%3Crect x='1' y='7' width='1' height='1'/%3E%3Crect x='2' y='7' width='1' height='1'/%3E%3Crect x='3' y='7' width='1' height='1'/%3E%3Crect x='4' y='7' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 8px 8px; image-rendering: pixelated; }
+.theme-swatch.pixel i:nth-child(2) { background: #284870; border-radius: 0; box-shadow: inset 0 0 0 1px #98d8f8, 0 0 0 1px #182840; }
+.theme-swatch.pixel i:nth-child(3) { background: #f8f8f8; border-radius: 0; box-shadow: 0 0 0 1.5px #f86838; }
+
+:root[data-theme="pixel"] {
+  --sky-4: #283850;  /* text on white boxes */
+  --sky-5: #203048;
+  --navy: #203048;
+  --navy-2: #18243a;
+  --cyan: #f8d048;   /* gold titles and accents */
+  --cyan-2: #f8e088;
+  --cyan-ring: #f86838;
+
+  --text-soft: #e8f0f8;
+  --text-muted: #b8cadc;
+  --text-faint: #8ca0b8;
+
+  --band: #203858;
+  --screen: #284870;
+  --screen-border: #98d8f8;
+  --inset: #1c3454;
+  --inset-hover: #22406a;
+  --inset-border: #5888b8;
+
+  --ring: 0 0 0 3px #f8f8f8, 0 0 0 6px #f86838;
+  --ring-soft: 0 0 0 2px #f8f8f8, 0 0 0 4px #f86838;
+  --shadow: 6px 6px 0 rgba(16, 24, 40, .3);
+  --r-md: 0;
+  --r-lg: 0;
+  --r-xl: 0;
+  --font-display: "Tidal Pixel", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+[data-theme="pixel"] body { background: #70c0ec; }
+
+/* Background: flat stripes, scrolling diagonally on the home screen (a compositor-only transform). */
+[data-theme="pixel"] .backdrop .sea { background: #70c0ec; }
+[data-theme="pixel"] .backdrop .grid { inset: -64px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='%2370c0ec'/%3E%3Cg fill='%2362b2e2'%3E%3Crect x='0' y='0' width='1' height='1'/%3E%3Crect x='1' y='0' width='1' height='1'/%3E%3Crect x='2' y='0' width='1' height='1'/%3E%3Crect x='3' y='0' width='1' height='1'/%3E%3Crect x='0' y='1' width='1' height='1'/%3E%3Crect x='1' y='1' width='1' height='1'/%3E%3Crect x='2' y='1' width='1' height='1'/%3E%3Crect x='7' y='1' width='1' height='1'/%3E%3Crect x='0' y='2' width='1' height='1'/%3E%3Crect x='1' y='2' width='1' height='1'/%3E%3Crect x='6' y='2' width='1' height='1'/%3E%3Crect x='7' y='2' width='1' height='1'/%3E%3Crect x='0' y='3' width='1' height='1'/%3E%3Crect x='5' y='3' width='1' height='1'/%3E%3Crect x='6' y='3' width='1' height='1'/%3E%3Crect x='7' y='3' width='1' height='1'/%3E%3Crect x='4' y='4' width='1' height='1'/%3E%3Crect x='5' y='4' width='1' height='1'/%3E%3Crect x='6' y='4' width='1' height='1'/%3E%3Crect x='7' y='4' width='1' height='1'/%3E%3Crect x='3' y='5' width='1' height='1'/%3E%3Crect x='4' y='5' width='1' height='1'/%3E%3Crect x='5' y='5' width='1' height='1'/%3E%3Crect x='6' y='5' width='1' height='1'/%3E%3Crect x='2' y='6' width='1' height='1'/%3E%3Crect x='3' y='6' width='1' height='1'/%3E%3Crect x='4' y='6' width='1' height='1'/%3E%3Crect x='5' y='6' width='1' height='1'/%3E%3Crect x='1' y='7' width='1' height='1'/%3E%3Crect x='2' y='7' width='1' height='1'/%3E%3Crect x='3' y='7' width='1' height='1'/%3E%3Crect x='4' y='7' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E"); background-size: 32px 32px; image-rendering: pixelated; mask-image: none; -webkit-mask-image: none; will-change: transform; }
+[data-theme="pixel"] .backdrop.moving .grid { animation: pixel-scroll 3.2s linear infinite; }
+@keyframes pixel-scroll { to { transform: translate(32px, 32px); } }
+[data-theme="pixel"] .backdrop .shine, [data-theme="pixel"] .backdrop svg { display: none; }
+
+/* Pixel font for titles, labels and buttons (one weight: no faux bold, no tracking). */
+[data-theme="pixel"] :is(.band h1, .clock, .tab, .btn, .chip, .card-title, .section-title, .hint, .glyph, .pill, .type,
+  .tile h3, .tool b, .save-title > b, .set-text > b, .theme-opt, .segmented button, .shoulder, .settings-about h2) {
+  font-family: var(--font-display); font-weight: 400; letter-spacing: 0;
+}
+/* The pixel font has one weight: no smeared faux bold anywhere it's used. */
+[data-theme="pixel"] * { font-synthesis: none; }
+[data-theme="pixel"] .band h1, [data-theme="pixel"] .tile h3, [data-theme="pixel"] .settings-about h2 { font-size: 21px; text-transform: none; }
+[data-theme="pixel"] .clock { font-size: 21px; }
+[data-theme="pixel"] :is(.tab, .btn, .chip, .card-title, .section-title, .hint, .tool b, .save-title > b, .set-text > b, .theme-opt, .segmented button) { font-size: 14px; }
+/* Header: the page name at 2x and tighter tabs, so all six tabs and the clock fit. */
+[data-theme="pixel"] .app .band h1 { font-size: 14px; padding: 6px 10px 4px; }
+[data-theme="pixel"] .tab { padding: 0 10px; gap: 6px; }
+[data-theme="pixel"] :is(.pill, .type, .shoulder, .glyph) { font-size: 14px; }
+[data-theme="pixel"] .card-title { text-transform: none; }
+
+/* Square everything: GBA menus have no rounded or blurred edges. */
+[data-theme="pixel"] :is(.screen, .btn, .chip, .input, .combo .input, .tile, .tool, .save-card, .rcard, .slot, .segmented, .segmented button,
+  .tri, .tri button, .dropdown, .dropdown .opt, .pill, .tab, .shoulder, .set-row, .theme-opt, .theme-swatch, .save-tag, .box-stage, .dock,
+  .dock-btn, .dock-btn .tip, .dialog, .modal, .switch .track, .switch .knob, .type, .mcat, .bag-pouch, .bag-row, .badge, .games .game,
+  .tile-arrow, .home-btn, .save-art img, .game-badge img, .stat-table td, .move-card, .xf-marks .mark, .tool .ic, .set-row .ic) {
+  border-radius: 0 !important;
+}
+[data-theme="pixel"] :is(.screen, .dropdown, .dialog, .modal, .dock) { backdrop-filter: none; }
+
+/* Boxes: flat dark blue with a light-blue inner and dark outer frame, and a hard shadow. White text with a pixel shadow. */
+[data-theme="pixel"] .screen { background: var(--screen); border: 2px solid #98d8f8; box-shadow: 0 0 0 2px #182840, 8px 8px 0 2px rgba(16, 24, 40, .28); text-shadow: 1px 1px 0 rgba(8, 16, 32, .45); }
+[data-theme="pixel"] .screen.dark { background: #203858; }
+[data-theme="pixel"] .card-title, [data-theme="pixel"] .section-title { color: var(--cyan); }
+[data-theme="pixel"] .section-title::after { background: repeating-linear-gradient(90deg, #98d8f8 0 4px, transparent 4px 8px); height: 2px; }
+[data-theme="pixel"] .dropdown { background: #203858; border: 2px solid #98d8f8; box-shadow: 0 0 0 2px #182840, 6px 6px 0 2px rgba(16, 24, 40, .3); }
+[data-theme="pixel"] .dropdown .opt.hi { background: #f8f8f8; color: #283850; box-shadow: none; }
+
+/* Header and footer: dark bars; the page name sits in a white sign. */
+[data-theme="pixel"] .app .header { background: #203858; box-shadow: 0 2px 0 #98d8f8, 0 4px 0 #182840; padding-bottom: 10px; }
+[data-theme="pixel"] .band::before, [data-theme="pixel"] .band::after { background: transparent; box-shadow: none; }
+[data-theme="pixel"] .band h1 { color: #283850; background: #f8f8f8; padding: 6px 12px 3px; box-shadow: 0 0 0 2px #98d8f8, 0 0 0 4px #182840; line-height: 1; }
+[data-theme="pixel"] .launcher .title-band .band::before { background: #203858; box-shadow: 0 2px 0 #98d8f8, 0 4px 0 #182840, 0 -2px 0 #98d8f8, 0 -4px 0 #182840; clip-path: none; }
+[data-theme="pixel"] .footer { background: #203858; box-shadow: 0 -2px 0 #98d8f8, 0 -4px 0 #182840; }
+[data-theme="pixel"] .footer::before { display: none; }
+[data-theme="pixel"] .launcher .clock, [data-theme="pixel"] .launcher .status-icon { color: #203048; }
+[data-theme="pixel"] .tab.on { color: #283850; background: #f8f8f8; box-shadow: 0 0 0 2px #f86838; }
+[data-theme="pixel"] .shoulder { background: #f8f8f8; color: #283850; box-shadow: 0 0 0 2px #182840; }
+
+/* Controls: dark boxes with light frames; picked ones turn into white boxes. */
+[data-theme="pixel"] :is(.btn, .chip, .segmented, .tri, .theme-opt) { background: #203858; border: 2px solid #98d8f8; box-shadow: 0 0 0 2px #182840; }
+[data-theme="pixel"] :is(.btn, .theme-opt):hover { background: #f8f8f8; color: #283850; text-shadow: none; }
+[data-theme="pixel"] :is(.btn.primary, .chip.on) { background: #f8f8f8; color: #283850; border-color: #f86838; text-shadow: none; }
+[data-theme="pixel"] :is(.segmented button.on, .tri button.on) { background: #f8f8f8; color: #283850; box-shadow: none; text-shadow: none; }
+[data-theme="pixel"] .theme-opt.on { box-shadow: 0 0 0 2px #182840, 0 0 0 5px #f86838; }
+[data-theme="pixel"] .input { border-width: 2px; }
+[data-theme="pixel"] .switch .track { background: #1c3454; border: 2px solid #98d8f8; }
+[data-theme="pixel"] .switch.on .track { background: #48b848; box-shadow: none; }
+[data-theme="pixel"] .switch .knob { background: #f8f8f8; }
+[data-theme="pixel"] .pill:not(.solid) { background: #182840; text-shadow: none; }
+
+/* Menu items (home tiles, Save Tools): dark boxes that turn white with a cursor arrow, like a GBA menu. */
+[data-theme="pixel"] .tile { background: #284870; box-shadow: inset 0 0 0 2px #98d8f8, 0 0 0 2px #182840, 8px 8px 0 2px rgba(16, 24, 40, .28); }
+[data-theme="pixel"] .tile::after { display: none; }
+[data-theme="pixel"] .tile:hover, [data-theme="pixel"] .tile.sel { background: #f8f8f8; color: #283850; transform: none; box-shadow: inset 0 0 0 2px #f86838, 0 0 0 2px #182840, 8px 8px 0 2px rgba(16, 24, 40, .28); }
+[data-theme="pixel"] :is(.tile:hover, .tile.sel) :is(h3, p) { color: #283850; text-shadow: none; }
+[data-theme="pixel"] :is(.tile:hover, .tile.sel) .art { color: #283850; filter: none; }
+[data-theme="pixel"] :is(.tile:hover, .tile.sel) h3::before { content: "\25B6\00a0"; }
+[data-theme="pixel"] .tool { background: rgba(8, 20, 44, .35); border: 2px solid #5888b8; }
+[data-theme="pixel"] .tool:hover { background: #f8f8f8; color: #283850; transform: none; text-shadow: none; box-shadow: 0 0 0 2px #f86838; }
+[data-theme="pixel"] .tool:hover small { color: #485868; }
+[data-theme="pixel"] .tool:hover b::before { content: "\25B6\00a0"; }
+[data-theme="pixel"] .tool.off:hover { background: rgba(8, 20, 44, .35); color: #fff; box-shadow: none; }
+[data-theme="pixel"] .slot { background: rgba(152, 216, 248, .14); border: 2px solid rgba(152, 216, 248, .3); }
+[data-theme="pixel"] .slot:hover { background: rgba(248, 248, 248, .4); border-color: #f8f8f8; }
+[data-theme="pixel"] .box-stage { background: #1c3454; }
+[data-theme="pixel"] .box-stage .wall { opacity: .3; image-rendering: pixelated; }
+[data-theme="pixel"] .save-card:hover, [data-theme="pixel"] .save-card.sel { transform: none; }
+
+/* Home: a dark framed dock with square buttons. */
+[data-theme="pixel"] .dock { background: #203858; box-shadow: inset 0 0 0 2px #98d8f8, 0 0 0 2px #182840, 8px 8px 0 2px rgba(16, 24, 40, .28); }
+[data-theme="pixel"] .dock-btn { background: #284870; box-shadow: inset 0 0 0 2px #5888b8; }
+[data-theme="pixel"] .dock-btn:hover, [data-theme="pixel"] .dock-btn.sel { transform: none; background: #f8f8f8; box-shadow: 0 0 0 2px #f86838; }
+[data-theme="pixel"] .dock-btn .tip { background: #f8f8f8; color: #283850; box-shadow: 0 0 0 2px #182840; font-family: var(--font-display); font-weight: 400; font-size: 14px; }
+[data-theme="pixel"] .avatar.empty { background: rgba(248, 248, 248, .3); box-shadow: 0 0 0 2px #f8f8f8; }
+[data-theme="pixel"] .boot { color: #203048; }
+[data-theme="pixel"] .boot .dots i { border-color: #203048; border-radius: 0; }
+[data-theme="pixel"] .boot img { filter: drop-shadow(6px 6px 0 rgba(16, 24, 40, .3)); }

@@ -21,6 +21,9 @@ public sealed class StartupSettings : IStartupSettings
     [LocalizedDescription("Use the TidalHeX web interface instead of the classic PKHeX window (restart required). Requires the Tidal theme.")]
     public bool TidalUI { get; set; } = true;
 
+    [LocalizedDescription("Color theme of the TidalHeX web interface: Tidal Light (the default), Tidal Dark, Tidal PSS, Tidal ZA or Tidal Pixel.")]
+    public TidalUITheme TidalUITheme { get; set; } = TidalUITheme.Light;
+
     [LocalizedDescription("Turn off the bubbles and animations in the TidalHeX web interface.")]
     public bool TidalReduceMotion { get; set; } = Tidal.Web.WebApi.IsSystemReducedMotion(); // follows Windows for new settings, json load preserves any choice.
 
@@ -105,4 +108,23 @@ public sealed class StartupSettings : IStartupSettings
             recent.RemoveAt(recent.Count - 1);
         recent.Insert(0, path);
     }
+}
+
+/// <summary> Color themes of the TidalHeX web interface. </summary>
+public enum TidalUITheme
+{
+    /// <summary> Tidal Light: the bright cyan-to-blue sea (default). </summary>
+    Light,
+
+    /// <summary> Tidal Dark: the same design on a deep night-time sea. </summary>
+    Dark,
+
+    /// <summary> Tidal PSS: the colors of X/Y and Omega Ruby/Alpha Sapphire's Player Search System screen. </summary>
+    PSS,
+
+    /// <summary> Tidal ZA: Pokémon Legends: Z-A's dark, particle-filled title screen and slate menus. </summary>
+    ZA,
+
+    /// <summary> Tidal Pixel: the Game Boy / Game Boy Advance games' pixel menus, with its own pixel font. </summary>
+    Pixel,
 }

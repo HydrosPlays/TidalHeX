@@ -6,6 +6,7 @@ window.TidalPages.settings = {
     this.store.hints = [];
     window.TidalFx.enter(this.$el.querySelectorAll('.set-row'), { stagger: 50, y: 12 });
   },
+  data: () => ({ themes: [{ id: 'light', name: 'Tidal Light (Default)' }, { id: 'dark', name: 'Tidal Dark' }, { id: 'pss', name: 'Tidal PSS' }, { id: 'za', name: 'Tidal ZA' }, { id: 'pixel', name: 'Tidal Pixel' }] }),
   methods: {
     motion(v) {
       this.store.settings.reducedMotion = v;
@@ -25,6 +26,17 @@ window.TidalPages.settings = {
         </div>
 
         <div class="settings-list">
+          <div class="set-row theme-row">
+            <span class="ic" style="--c: var(--cyan)"><t-icon name="theme"></t-icon></span>
+            <div class="set-text"><b>Theme</b><small>How TidalHeX looks. PKHeX's classic windows keep the ocean theme.</small></div>
+            <div class="theme-picker" role="radiogroup" aria-label="Theme">
+              <button v-for="t in themes" :key="t.id" class="theme-opt" :class="{ on: store.settings.theme === t.id }" role="radio" :aria-checked="store.settings.theme === t.id" @click="store.setTheme(t.id)">
+                <span class="theme-swatch" :class="t.id"><i></i><i></i><i></i></span>
+                <span>{{ t.name }}</span>
+                <t-icon v-if="store.settings.theme === t.id" name="check"></t-icon>
+              </button>
+            </div>
+          </div>
           <div class="set-row">
             <span class="ic" style="--c: var(--cyan)"><t-icon name="sparkle"></t-icon></span>
             <div class="set-text"><b>Reduce motion</b><small>Turns off the bubbles and animations.</small></div>

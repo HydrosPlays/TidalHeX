@@ -10,6 +10,8 @@ public sealed record SaveSummary
     public bool Loaded { get; init; }
     public bool Blank { get; init; }
     public string Game { get; init; } = string.Empty;
+    /// <summary> Box art (img/games/...), as in the Save Manager: two for saves that can't tell a pair apart. </summary>
+    public List<string> Icons { get; init; } = [];
     public int Version { get; init; }
     public int Generation { get; init; }
     public string Context { get; init; } = string.Empty;
@@ -86,6 +88,9 @@ public sealed record RecentFile
 public sealed record UiSettings
 {
     public bool ReducedMotion { get; init; }
+
+    /// <summary> "light" (Tidal Light, default), "dark" (Tidal Dark), "pss" (Tidal PSS), "za" (Tidal ZA) or "pixel" (Tidal Pixel): Startup.TidalUITheme. </summary>
+    public string Theme { get; init; } = "light";
     public bool HideSecrets { get; init; }
 
     /// <summary> Encounter database: only Pokémon that exist in the loaded game (PKHeX setting EncounterDb.FilterUnavailableSpecies). </summary>

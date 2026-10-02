@@ -18,6 +18,11 @@ window.TidalFx = (() => {
   // panel's blur to be recomputed each frame for motion nobody can see, so pages get a still backdrop.
   let host, svg, canvas, mode = 'home';
   let bubbles = null; // { start(), stop(), clear() }
+  // Tidal ZA swaps the sea's rings and bubbles for Legends: Z-A's title screen: floating squares and green data dots.
+  let theme = document.documentElement.dataset.theme || 'light';
+  const isZA = () => theme === 'za';
+  // Tidal Pixel: a flat scrolling pattern (CSS) and blocky pixel bubbles instead of rings and glows.
+  const isPixel = () => theme === 'pixel';
 
   function mount(container) {
     host = container;
@@ -69,6 +74,13 @@ window.TidalFx = (() => {
     const merge = el('feMerge', {}, glow);
     el('feMergeNode', { in: 'b' }, merge); el('feMergeNode', { in: 'SourceGraphic' }, merge);
 
+    if (isZA() || isPixel()) {
+      if (isZA()) drawSquares(w, h, mode === 'page' ? 0.6 : 0.45); // home: fainter, the moving squares (canvas) fill in
+      if (mode === 'page') bubbles?.clear();
+      updateMotion();
+      return;
+    }
+
     if (mode === 'home') drawRings(w * 0.5, h * 0.66, Math.max(w, h) * 0.12, 7, 0.16);
     else drawRings(w * 0.5, h * 0.52, Math.min(w, h) * 0.2, 4, 0.07);
     if (mode !== 'home') { drawBrackets(w, h); drawCircuits(w, h, mode === 'boot' ? 1 : 0.55); }
@@ -112,6 +124,19 @@ window.TidalFx = (() => {
     side(false); side(true);
   }
 
+  /** Tidal ZA's still layer: hollow and filled squares scattered like the Z-A title screen (same layout every time). */
+  function drawSquares(w, h, alpha) {
+    const g = el('g', { class: 'deco squares', opacity: alpha }, svg);
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 34; i++) {
+      const s = 8 + rnd() * 20, x = rnd() * w, y = rnd() * h, filled = rnd() < 0.35;
+      el('rect', filled
+        ? { x, y, width: s, height: s, fill: '#b8c2bf', 'fill-opacity': 0.12 + rnd() * 0.22 }
+        : { x, y, width: s, height: s, fill: 'none', stroke: '#e3ece8', 'stroke-opacity': 0.14 + rnd() * 0.3, 'stroke-width': 1.5 }, g);
+    }
+  }
+
   function drawCircuits(w, h, alpha) {
     const g = el('g', { class: 'deco circuits', opacity: alpha }, svg);
     const lines = [
@@ -148,6 +173,41 @@ window.TidalFx = (() => {
     resize(); window.addEventListener('resize', resize);
     const spawn = (y) => ({ x: Math.random() * W, y: y ?? H + 20, r: 1.5 + Math.random() * 5, v: 0.25 + Math.random() * 0.6, p: Math.random() * 6.28, a: 0.15 + Math.random() * 0.3 });
     for (let i = 0; i < 24; i++) list.push(spawn(Math.random() * H));
+    // Tidal ZA: squares drifting up, and columns of green dots falling like the title screen's data.
+    const spawnSquare = (y) => ({ x: Math.random() * W, y: y ?? H + 30, s: 6 + Math.random() * 18, v: 0.12 + Math.random() * 0.35, a: 0.12 + Math.random() * 0.33, fill: Math.random() < 0.4 });
+    const spawnStream = (y) => ({ x: Math.round(Math.random() * W / 8) * 8, y: y ?? -Math.random() * H * 0.5, v: 0.5 + Math.random() * 1.1, len: 6 + Math.floor(Math.random() * 16), a: 0.25 + Math.random() * 0.4 });
+    let squares = Array.from({ length: 22 }, () => spawnSquare(Math.random() * H));
+    let streams = Array.from({ length: 20 }, () => spawnStream(Math.random() * H));
+    // Tidal Pixel: bubbles drawn as blocky pixel rings (3 screen pixels per pixel), rising straight up.
+    const BUBBLE_PX = ['.##.', '#..#', '#..#', '.##.'];
+    const drawPixel = (step) => {
+      for (const b of list) {
+        b.y -= b.v * step;
+        const s = b.r > 4 ? 4 : 3, x = Math.round((b.x + Math.sin(b.p += 0.01 * step) * 4) / s) * s, y = Math.round(b.y / s) * s;
+        ctx.fillStyle = `rgba(255,255,255,${Math.min(0.85, b.a + 0.35)})`;
+        BUBBLE_PX.forEach((row, ry) => { for (let rx = 0; rx < 4; rx++) if (row[rx] === '#') ctx.fillRect(x + rx * s, y + ry * s, s, s); });
+        ctx.fillRect(x + s, y + s, s, s); // shine
+      }
+      list = list.map(b => (b.y < -20 ? spawn() : b));
+    };
+    const drawZA = (step) => {
+      for (const q of streams) {
+        q.y += q.v * step;
+        for (let k = 0; k < q.len; k++) {
+          const y = q.y - k * 8;
+          if (y < -4 || y > H + 4) continue;
+          ctx.fillStyle = `rgba(120,236,160,${(k === 0 ? 1 : 1 - k / q.len) * q.a})`;
+          ctx.fillRect(q.x, y, 2, 2);
+        }
+      }
+      streams = streams.map(q => (q.y - q.len * 8 > H ? spawnStream(-10) : q));
+      for (const q of squares) {
+        q.y -= q.v * step;
+        if (q.fill) { ctx.fillStyle = `rgba(184,194,191,${q.a * 0.8})`; ctx.fillRect(q.x, q.y, q.s, q.s); }
+        else { ctx.strokeStyle = `rgba(227,236,232,${q.a})`; ctx.lineWidth = 1.5; ctx.strokeRect(q.x, q.y, q.s, q.s); }
+      }
+      squares = squares.map(q => (q.y < -40 ? spawnSquare() : q));
+    };
     const tick = (now) => {
       frame = requestAnimationFrame(tick);
       const elapsed = now - last;
@@ -155,6 +215,8 @@ window.TidalFx = (() => {
       const step = Math.min(3, elapsed / (1000 / 60)); // keep the speed of the original 60 fps motion
       last = now;
       ctx.clearRect(0, 0, W, H);
+      if (isZA()) { drawZA(step); return; }
+      if (isPixel()) { drawPixel(step); return; }
       for (const b of list) {
         b.y -= b.v * step; b.p += 0.02 * step; const x = b.x + Math.sin(b.p) * 6;
         ctx.beginPath(); ctx.arc(x, b.y, b.r, 0, 6.283);
@@ -239,7 +301,15 @@ window.TidalFx = (() => {
     A.animate(o, { v: to, duration: 900, ease: 'outExpo', onUpdate: () => { elm.textContent = Math.round(o.v).toLocaleString(); } });
   }
 
+  function setTheme(t) {
+    const next = t || 'light';
+    if (next === theme) return;
+    theme = next;
+    bubbles?.clear();
+    draw(mode, true);
+  }
+
   function setReduced(v) { reduced = !!v; document.documentElement.classList.toggle('reduced', reduced); draw(mode, true); if (reduced) bubbles?.clear(); }
 
-  return { mount, draw, enter, page, pop, bounce, title, slideTo, count, setReduced, get reduced() { return reduced; } };
+  return { mount, draw, enter, page, pop, bounce, title, slideTo, count, setReduced, setTheme, get reduced() { return reduced; } };
 })();

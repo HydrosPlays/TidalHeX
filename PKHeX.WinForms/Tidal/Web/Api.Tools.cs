@@ -28,6 +28,7 @@ internal sealed partial class WebApi
         Bridge.Register("tools.open", c => OpenTool(c.Get<IdArgs>().Id));
         Bridge.Register("app.settings", _ => OpenSettings());
         Bridge.Register("app.setOption", c => SetOption(c.Get<OptionArgs>()));
+        Bridge.Register("app.setTheme", c => SetTheme(c.Get<ThemeArgs>().Theme));
         Bridge.Register("app.classic", _ => SwitchToClassic());
     }
 
@@ -623,6 +624,21 @@ internal sealed partial class WebApi
             default:
                 throw new ArgumentException($"Unknown option '{args.Name}'.");
         }
+        return GetUiSettings();
+    }
+
+    /// <summary> Settings → Theme: "light" (Tidal Light), "dark" (Tidal Dark), "pss" (Tidal PSS), "za" (Tidal ZA) or "pixel" (Tidal Pixel), saved on exit. </summary>
+    private UiSettings SetTheme(string theme)
+    {
+        Settings.Startup.TidalUITheme = theme switch
+        {
+            "light" => TidalUITheme.Light,
+            "dark" => TidalUITheme.Dark,
+            "pss" => TidalUITheme.PSS,
+            "za" => TidalUITheme.ZA,
+            "pixel" => TidalUITheme.Pixel,
+            _ => throw new ArgumentException($"Unknown theme '{theme}'."),
+        };
         return GetUiSettings();
     }
 
