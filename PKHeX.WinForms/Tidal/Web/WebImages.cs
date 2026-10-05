@@ -31,7 +31,7 @@ internal sealed class WebImages(WebApi api)
         var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
         var image = parts switch
         {
-            ["wallpaper", "choice", var value] => GetWallpaperChoice(ToInt(value)),
+            ["wallpaper", "choice", var value] => GetWallpaperChoice(ToInt(value), query.TryGetValue("box", out var at) ? ToInt(at) : 0),
             ["wallpaper", var box] => GetWallpaper(ToInt(box)),
             ["sprite", "slot", var box, var slot] => GetFlag(query, "clean") ? GetCleanSlotSprite(ToInt(box), ToInt(slot)) : GetSlotSprite(ToInt(box), ToInt(slot)),
             ["sprite", "editor"] => GetFlag(query, "clean") ? GetCleanSprite(Session.Editor, crop: false, stored: false) : Session.Editor.Sprite(SAV),
@@ -144,13 +144,22 @@ internal sealed class WebImages(WebApi api)
         new("PKHeX.Drawing.Misc.Properties.Resources", typeof(WallpaperUtil).Assembly);
 
     /// <summary> A wallpaper by its value (for choosing one before it's saved), as WallpaperUtil draws it. </summary>
-    private Image? GetWallpaperChoice(int value)
+    /// <param name="value">Wallpaper value.</param>
+    /// <param name="box">Box position it would be shown on; only matters for a wallpaper that differs by box.</param>
+    private Image? GetWallpaperChoice(int value, int box)
     {
         var sav = SAV;
         if (value < 0 || sav is not IBoxDetailWallpaper)
             return null;
         if (sav is SAV9ZA or SAV8LA) // one fixed scene for every box
             return GetWallpaper(0);
+        if (sav is SAV3RSBox && value == WebApi.PictureWallpaperRSBox && (uint)box < sav.BoxCount)
+        {
+            // WallpaperUtil draws the save's picture onto this one; ask it for a copy of the save with the wallpaper set.
+            var copy = (SAV3RSBox)sav.Clone();
+            copy.SetBoxWallpaper(box, value);
+            return copy.WallpaperImage(box);
+        }
         var name = WallpaperUtil.GetWallpaperResourceName(sav.Version, value);
         return WallpaperResources.GetObject(name) as Image ?? GetWallpaper(0);
     }

@@ -37,6 +37,7 @@ the host reads file paths from `CoreWebView2WebMessageReceivedEventArgs.Addition
 | `/sprite/gem/{type}` | Tera Type gem (`99` = Stellar) |
 | `/sprite/egg/{species}` | the plain egg sprite in the current sprite style (`490` = Manaphy's egg) |
 | `/wallpaper/{box}?v={n}` | box wallpaper image |
+| `/wallpaper/choice/{value}?box={position}` | a wallpaper by its value, for the Box Layout tool's picker. `box` only matters for Box R/S's "My Wallpaper" (`BoxLayoutDto.pictureWallpaper`), which shows the left or right half of the save's picture by box position. |
 
 Responses carry `Cache-Control: max-age=31536000` when the URL has `v`; the UI bumps `v` to refresh.
 

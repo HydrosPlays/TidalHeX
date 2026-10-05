@@ -463,6 +463,8 @@ internal sealed partial class WebApi
             s => s.State.Exportable && s.Metadata.FilePath is not null, () => ExportBackup()),
         new("JPEG", "B_JPEG", "Save PGL .JPEG", CatData, "Export the Pokémon Global Link photo stored in the save.",
             s => subEditors && s is ISaveBlock6Main, ExportJpeg),
+        new("MyWallpaper", "B_MyWallpaper", "Save My Wallpaper", CatData, "Export the My Wallpaper picture stored in the save as a PNG.",
+            s => subEditors && s is SAV3RSBox, ExportMyWallpaper),
         new("ConvertKorean", "B_ConvertKorean", "Korean Save Conversion", CatData, "Convert a Gen 4 save between Korean and international.",
             s => subEditors && s is SAV4, ConvertKorean),
     ];
@@ -587,6 +589,27 @@ internal sealed partial class WebApi
         if (sfd.ShowDialog(Host) != DialogResult.OK)
             return;
         File.WriteAllBytes(sfd.FileName, jpeg);
+    }
+
+    /// <summary> SAVEditor.B_MyWallpaper_Click </summary>
+    private void ExportMyWallpaper()
+    {
+        var box = (SAV3RSBox)SAV;
+        var cmpr = box.MyWallpaper;
+        if (!(box.MyWallpaperEnabled || cmpr.ContainsAnyExcept<byte>(0)))
+        {
+            WinFormsUtil.Alert(MsgSaveJPEGExportFail);
+            return;
+        }
+        const int width = SAV3RSBox.WP_WIDTH, height = SAV3RSBox.WP_HEIGHT;
+        var data = CMPR.Decompress(cmpr, width, height);
+        using var picture = Drawing.ImageUtil.GetBitmap(data, width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        using var sfd = new SaveFileDialog();
+        sfd.FileName = "My Wallpaper";
+        sfd.Filter = "PNG|*.png";
+        if (sfd.ShowDialog(Host) != DialogResult.OK)
+            return;
+        picture.Save(sfd.FileName, System.Drawing.Imaging.ImageFormat.Png);
     }
 
     private void ConvertKorean()

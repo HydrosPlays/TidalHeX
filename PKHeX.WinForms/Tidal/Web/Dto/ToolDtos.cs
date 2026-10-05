@@ -104,6 +104,12 @@ public sealed record BoxLayoutDto
     /// <summary> Legends: Arceus / Z-A show one scene for every box (the wallpaper value still exists). </summary>
     public bool FixedWallpaper { get; init; }
 
+    /// <summary>
+    /// Wallpaper value that shows the save's own picture (Box R/S "My Wallpaper"), if the game has one. It is drawn as the
+    /// left or right half of the picture by box position, so its preview takes <c>?box=</c>.
+    /// </summary>
+    public int? PictureWallpaper { get; init; }
+
     /// <summary> Number of unlocked boxes, if the game tracks it. </summary>
     public int? Unlocked { get; init; }
 

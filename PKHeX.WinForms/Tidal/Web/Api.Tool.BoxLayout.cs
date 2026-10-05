@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using PKHeX.Core;
+using static PKHeX.WinForms.WallpaperName; // "Simple" is also a method here, so that one is written in full
 
 namespace PKHeX.WinForms.Tidal.Web;
 
@@ -15,24 +16,91 @@ internal sealed partial class WebApi
         Bridge.Register("boxlayout.save", c => SaveBoxLayout(c.Get<BoxLayoutSaveArgs>()));
     }
 
-    /// <summary> Wallpaper choices by generation (SAV_BoxLayout.LoadWallpapers); empty if the game has none. </summary>
+    /// <summary> Box R/S "My Wallpaper": the save's own picture, drawn as its left or right half by box position. </summary>
+    internal const int PictureWallpaperRSBox = 20;
+
+    /// <summary> Wallpaper choices by game (SAV_BoxLayout.LoadWallpapers); empty if the game has none. </summary>
     private static string[] GetWallpaperNames(SaveFile sav)
     {
         if (sav is not IBoxDetailWallpaper)
             return [];
         var names = GameInfo.Strings.wallpapernames;
-        static string[] Placeholders(int count) => Enumerable.Range(1, count).Select(i => $"Wallpaper {i}").ToArray();
+        string[] Named(ReadOnlySpan<WallpaperName> list, string suffix = "")
+        {
+            var result = new string[list.Length];
+            for (int i = 0; i < list.Length; i++)
+                result[i] = names[(int)list[i]] + suffix;
+            return result;
+        }
+        static string[] Placeholders(int count)
+        {
+            var prefix = GetWallpaperPrefix();
+            return Enumerable.Range(1, count).Select(i => $"{prefix}{i}").ToArray();
+        }
+
         return sav.Generation switch
         {
-            3 when sav is SAV3 or SAV3RSBox => names[..16],
-            4 or 5 or 6 => names[..24],
+            3 => [..names[..12], ..Named(sav switch
+            {
+                SAV3RS => [PolkaDot, PokemonCenter, Machine3, Plain],
+                SAV3E => [PolkaDot, PokemonCenter, Machine3, WallpaperName.Simple, Friends],
+                SAV3FRLG => [Stars, PokemonCenter, Tiles, WallpaperName.Simple],
+                SAV3RSBox => [PolkaDot, PokemonCenter, Machine3, Plain, Flower, Tiles, Carpet, Ruin, MyWallpaper],
+                _ => [],
+            })],
+            4 or 5 => [..names[..16], ..Named(sav switch
+            {
+                SAV4DP => [Space, Backyard, Nostalgic, Torchic, Trio, Pikapika, Legend, TeamGalactic],
+                SAV4Pt => [Distortion, Contest, Nostalgic, Croagunk, Trio, Pikapika, Legend, TeamGalactic],
+                SAV4HGSS => [Heart, Soul, BigBrother, Pokeathlon, Trio, SpikyPika, KimonoGirl, Revival],
+                SAV5BW => [Reshiram, Zekrom, Monochrome, TeamPlasma, Munna, Zoroark, Subway, Musical],
+                SAV5B2W2 => [Monochrome, TeamPlasma, Movie, PWT, Kyurem1, Kyurem2, Reshiram, Zekrom],
+                _ => [],
+            })],
+            6 => names[..24],
             7 => names[..16],
-            8 when sav is SAV8BS => names[..32],
+            8 when sav is SAV8BS =>
+            [
+                ..names[..16],
+                ..Named([Space, Backyard, Nostalgic, Torchic, Trio, Pikapika, Legend, TeamGalactic]),
+                ..Named([Distortion, Contest, Nostalgic, Croagunk, Trio, Pikapika, Legend, TeamGalactic], GetPlatinumSuffix()),
+            ],
             8 => Placeholders(19),
             9 => Placeholders(20),
             _ => [],
         };
     }
+
+    /// <summary> Marks BD/SP's second set of wallpapers, which reuse Diamond/Pearl names (SAV_BoxLayout.GetPlatinumSuffix). </summary>
+    private static string GetPlatinumSuffix() => GameInfo.Strings.Language switch
+    {
+        LanguageID.Japanese => "Ｐｔ",
+        LanguageID.English => " (Platinum)",
+        LanguageID.German => " (Platin)",
+        LanguageID.French => " (Platine)",
+        LanguageID.Italian => " (Platino)",
+        LanguageID.Spanish or LanguageID.SpanishL => " (Platino)",
+        LanguageID.Korean => " Pt",
+        LanguageID.ChineseS or LanguageID.ChineseT => "Ｐｔ",
+
+        _ => " (Platinum)",
+    };
+
+    /// <summary> Name for the numbered wallpapers of Gen 8 and 9 (SAV_BoxLayout.GetWallpaperPrefix). </summary>
+    private static string GetWallpaperPrefix() => GameInfo.Strings.Language switch
+    {
+        LanguageID.Japanese => "かべがみ",
+        LanguageID.English => "Wallpaper ",
+        LanguageID.German => "Hintergrund ",
+        LanguageID.French => "Thème ",
+        LanguageID.Italian => "Sfondo ",
+        LanguageID.Spanish or LanguageID.SpanishL => "Fondo ",
+        LanguageID.Korean => "벽지",
+        LanguageID.ChineseS => "壁纸",
+        LanguageID.ChineseT => "壁紙",
+
+        _ => "Wallpaper ",
+    };
 
     private static int GetBoxNameMaxLength(SaveFile sav) => sav.Generation switch
     {
@@ -77,6 +145,7 @@ internal sealed partial class WebApi
             NameMaxLength = GetBoxNameMaxLength(sav),
             Wallpapers = wallpapers,
             FixedWallpaper = sav is SAV9ZA or SAV8LA, // the game uses one scene for every box
+            PictureWallpaper = sav is SAV3RSBox ? PictureWallpaperRSBox : null,
             Unlocked = unlocked > 0 ? Math.Min(sav.BoxCount, unlocked) : null,
             Flags = sav.BoxFlags.Select(b => (int)b).ToArray(),
             SlotsPerBox = sav.BoxSlotCount,

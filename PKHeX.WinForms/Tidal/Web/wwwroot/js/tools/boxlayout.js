@@ -33,7 +33,12 @@ window.TidalTools.boxlayout = {
         window.TidalFx.enter(this.$el.querySelectorAll('.bl-detail > *'), { stagger: 40, y: 10 });
       });
     },
-    wallpaperUrl(w) { return this.host && w >= 0 ? `/wallpaper/choice/${w}?g=${this.store.save?.version ?? 0}` : null; },
+    // pos: where the box sits; only the save's own picture ("My Wallpaper") differs by it (left or right half).
+    wallpaperUrl(w, pos = 0) {
+      if (!this.host || w < 0) return null;
+      const half = w === this.d?.pictureWallpaper ? `&box=${pos % 2}` : '';
+      return `/wallpaper/choice/${w}?g=${this.store.save?.version ?? 0}${half}`;
+    },
     move(dir) {
       const i = this.sel, j = i + dir;
       if (dir < 0 ? !this.canUp : !this.canDown) return;
@@ -92,7 +97,7 @@ window.TidalTools.boxlayout = {
           <div v-for="(b, i) in boxes" :key="b.index" class="bl-item" :class="{ on: i === sel, over: i === dragOver && dragFrom !== i, locked: b.locked }"
                :draggable="!b.locked" @click="sel = i" @dragstart="dragStart(i, $event)" @dragenter.prevent="dragEnter(i)" @dragover.prevent @drop.prevent="drop(i)" @dragend="dragFrom = dragOver = -1">
             <span class="num">{{ i + 1 }}</span>
-            <span class="thumb"><img v-if="wallpaperUrl(b.wallpaper)" :src="wallpaperUrl(b.wallpaper)" alt=""></span>
+            <span class="thumb"><img v-if="wallpaperUrl(b.wallpaper, i)" :src="wallpaperUrl(b.wallpaper, i)" alt=""></span>
             <span class="nm">{{ b.name || '(no name)' }}</span>
             <span class="cnt" :title="b.count + ' Pokémon'">{{ b.count }}/{{ d.slotsPerBox }}</span>
             <t-icon v-if="b.locked" name="shield" title="Has locked or team slots: can't be moved"></t-icon>
@@ -101,7 +106,7 @@ window.TidalTools.boxlayout = {
 
         <section v-if="box" class="bl-detail">
           <div class="bl-preview">
-            <img v-if="wallpaperUrl(box.wallpaper)" :src="wallpaperUrl(box.wallpaper)" alt="">
+            <img v-if="wallpaperUrl(box.wallpaper, sel)" :src="wallpaperUrl(box.wallpaper, sel)" alt="">
             <div class="bl-title"><button class="btn small" :disabled="sel === 0" @click="sel--"><t-icon name="back"></t-icon></button><span>{{ box.name || '(no name)' }}</span><button class="btn small" :disabled="sel === boxes.length - 1" @click="sel++"><t-icon name="next"></t-icon></button></div>
           </div>
 
@@ -116,7 +121,7 @@ window.TidalTools.boxlayout = {
           <div v-if="d.wallpapers.length" class="field"><label>Wallpaper{{ d.fixedWallpaper ? ' (this game shows one scene for every box)' : '' }}</label>
             <div class="wp-grid">
               <button v-for="(w, i) in d.wallpapers" :key="i" class="wp" :class="{ on: box.wallpaper === i }" :title="w" @click="box.wallpaper = i">
-                <img v-if="wallpaperUrl(i) && !d.fixedWallpaper" :src="wallpaperUrl(i)" alt="" loading="lazy"><span v-else class="wp-ph">{{ i + 1 }}</span>
+                <img v-if="wallpaperUrl(i, sel) && !d.fixedWallpaper" :src="wallpaperUrl(i, sel)" alt="" loading="lazy"><span v-else class="wp-ph">{{ i + 1 }}</span>
                 <small>{{ w }}</small>
               </button>
             </div>
