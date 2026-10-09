@@ -21,6 +21,14 @@ internal sealed partial class EditorService
     public PKM Entity => Session.Editor;
 
     private bool _metAsEgg;
+
+    /// <summary>
+    /// PKMEditor's "Nicknamed" checkbox: editor state, read from the Pokémon once when it is loaded. Later edits must ask
+    /// this, not <see cref="PKM.IsNicknamed"/>: Gen 3 has no such flag (it compares the name with the species name, in
+    /// the Pokémon's language) and the Game Boy formats work it out from the name too, so after a species or language
+    /// change the Pokémon itself answers "nicknamed" about the very name that should be replaced.
+    /// </summary>
+    private bool _nicknamed;
     private LegalityAnalysis? _legality;
     private static readonly GameStrings English = GameInfo.GetStrings(GameLanguage.DefaultLanguage);
 
@@ -38,6 +46,8 @@ internal sealed partial class EditorService
         if (!HaX && pk.Species != 0 && pk.CurrentLevel == 100)
             pk.CurrentLevel = 100; // clamp EXP to the level-100 value, as PKHeX's editor does on load
         _metAsEgg = pk.Format >= 4 && pk.Species != 0 && EncounterStateUtil.IsMetAsEgg(pk);
+        try { _nicknamed = pk.Species != 0 && pk.IsNicknamed; } // LoadNickname
+        catch { _nicknamed = false; } // unreadable name data must not stop the Pokémon from loading
         _legality = null;
     }
 
@@ -304,7 +314,7 @@ internal sealed partial class EditorService
             Forms = forms,
             FormNote = forms.Count == 0 ? GetFormNote(pk, sav) : null,
             Nickname = pk.Nickname,
-            IsNicknamed = pk.IsNicknamed,
+            IsNicknamed = _nicknamed,
             NicknameMax = pk.MaxStringLengthNickname,
             Level = pk.CurrentLevel,
             Exp = pk.EXP,
@@ -511,9 +521,10 @@ internal sealed partial class EditorService
             case "form": SetForm(pk, (byte)value.GetInt32()); break;
             case "nickname": SetNicknameText(pk, value.GetString() ?? string.Empty); break;
             case "isNicknamed":
-                pk.IsNicknamed = value.GetBoolean();
-                if (!pk.IsNicknamed)
-                    ResetNickname(pk);
+                if (value.GetBoolean())
+                    SetNicknameFlag(pk, true); // the name stays; it is now kept through species and language changes
+                else
+                    SetDefaultNickname(pk, GetNameLanguage(pk));
                 break;
             case "level":
                 pk.EXP = Experience.GetEXP((byte)Math.Clamp(value.GetInt32(), Experience.MinLevel, Experience.MaxLevel), pk.PersonalInfo.EXPGrowth);
@@ -544,7 +555,8 @@ internal sealed partial class EditorService
                 if (pk.Format >= 3)
                 {
                     pk.Language = value.GetInt32();
-                    ResetNickname(pk);
+                    if (!_nicknamed)
+                        SetDefaultNickname(pk, GetNameLanguage(pk));
                 }
                 break;
             case "friendship": pk.OriginalTrainerFriendship = (byte)Math.Clamp(value.GetInt32(), 0, 255); break;
@@ -568,6 +580,7 @@ internal sealed partial class EditorService
     {
         if (species > pk.MaxSpeciesID)
             return;
+        var language = GetNameLanguage(pk); // before the species changes: the Game Boy formats guess it from species + name
         var abilityIndex = AbilityFollowsSpecies(pk) ? GetAbilityIndex(pk, pk.PersonalInfo.AbilityCount) : -1;
         pk.Species = species;
         if (!HaX)
@@ -579,8 +592,10 @@ internal sealed partial class EditorService
             pk.Gender = pk.GetSaneGender();
         if (pk is IFormArgument fa && FormArgumentUtil.GetType(pk.Species, pk.Form, pk.Context) == FormArgumentType.None)
             fa.FormArgument = 0;
-        ResetNickname(pk);
+        if (!_nicknamed)
+            SetDefaultNickname(pk, language);
     }
+
 
     /// <summary>
     /// Gen 3 Deoxys: its forme isn't stored in the Pokémon, the game it's in decides it (the sprite engine draws it the same way).
@@ -826,8 +841,8 @@ internal sealed partial class EditorService
                 bool traded = sav.OT != pk.OriginalTrainerName || sav.TID16 != pk.TID16 || sav.SID16 != pk.SID16;
                 pk.MetLocation = traded ? Locations.TradedEggLocation(sav.Generation, sav.Version) : LocationEdits.GetNoneLocation(pk);
             }
-            pk.IsNicknamed = EggStateLegality.IsNicknameFlagSet(pk);
-            pk.Nickname = SpeciesName.GetEggName(pk.Language, pk.Format);
+            SetNicknameFlag(pk, EggStateLegality.IsNicknameFlagSet(pk));
+            pk.Nickname = SpeciesName.GetEggName(GetNameLanguage(pk), pk.Format);
             if (pk.Format >= 6 && Program.Settings.SlotWrite.SetUpdatePKM)
                 pk.ClearMemories();
             if (pk is PK9)
@@ -836,7 +851,8 @@ internal sealed partial class EditorService
         }
 
         // Hatch
-        var eggName = SpeciesName.GetEggName(pk.Language, pk.Format);
+        var language = GetNameLanguage(pk);
+        var eggName = SpeciesName.GetEggName(language, pk.Format);
         pk.IsEgg = false;
         pk.OriginalTrainerFriendship = pk.PersonalInfo.BaseFriendship; // egg cycles become friendship again
         if (pk.Format >= 4)
@@ -854,10 +870,9 @@ internal sealed partial class EditorService
             }
         }
         if (pk.Nickname == eggName)
-        {
-            pk.IsNicknamed = false;
-            ResetNickname(pk);
-        }
+            _nicknamed = false; // it only had the Egg's name
+        if (!_nicknamed)
+            SetDefaultNickname(pk, language);
     }
 
     private static void SetTera(PKM pk, int value)
@@ -1028,29 +1043,49 @@ internal sealed partial class EditorService
         return !SpeciesName.IsNicknamedAnyLanguage(species, current, EntityContext.Gen4);
     }
 
-    private static void SetNicknameText(PKM pk, string text)
+    private void SetNicknameText(PKM pk, string text)
     {
         pk.Nickname = text;
-        if (!pk.IsNicknamed && pk.Species is > 0 && pk.Species <= pk.MaxSpeciesID && !IsPossibleNotNicknamed(pk, text))
-            pk.IsNicknamed = true;
+        if (!_nicknamed && pk.Species is > 0 && pk.Species <= pk.MaxSpeciesID && !IsPossibleNotNicknamed(pk, text))
+            SetNicknameFlag(pk, true);
     }
 
-    private static void ResetNickname(PKM pk)
+    /// <summary> Sets the editor's flag and the Pokémon's own (a stored bit from Gen 4 on; kept in memory by the Game Boy formats; not stored at all in Gen 3). </summary>
+    private void SetNicknameFlag(PKM pk, bool value)
     {
-        if (pk.IsNicknamed)
-            return;
+        _nicknamed = value;
+        pk.IsNicknamed = value;
+    }
+
+    /// <summary>
+    /// Language for the species (or Egg) name: PKMEditor's language box. The Game Boy formats store none and guess it
+    /// from species + name, which fails as soon as the two no longer match; guess it the way PKMEditor does on load.
+    /// </summary>
+    private int GetNameLanguage(PKM pk)
+    {
+        var save = Sav.Language;
+        var language = pk is GBPKM gb ? (gb.IsSpeciesNameMatch(save) ? save : gb.GuessedLanguage(save)) : pk.Language;
+        return language > 0 ? language : save > 0 ? save : (int)LanguageID.English;
+    }
+
+    /// <summary>
+    /// Not nicknamed: gives the Pokémon its species (or Egg) name in that language. The caller has already decided this
+    /// with <see cref="_nicknamed"/>; nothing here asks the Pokémon.
+    /// </summary>
+    private void SetDefaultNickname(PKM pk, int language)
+    {
+        SetNicknameFlag(pk, false);
         if (pk.Species == 0 || pk.Species > pk.MaxSpeciesID)
         {
             pk.Nickname = string.Empty;
             return;
         }
         // PKHeX keeps a name that is already a species name in some language; we re-localize like "Clear nickname".
-        var lang = pk.Language;
         pk.Nickname = pk.IsEgg
-            ? SpeciesName.GetEggName(lang, pk.Format)
-            : SpeciesName.GetSpeciesNameGeneration(pk.Species, lang, pk.Format);
-        if (pk is GBPKM gb)
-            gb.SetNotNicknamed(lang);
+            ? SpeciesName.GetEggName(language, pk.Format)
+            : SpeciesName.GetSpeciesNameGeneration(pk.Species, language, pk.Format);
+        if (pk is GBPKM gb && !pk.IsEgg)
+            gb.SetNotNicknamed(language);
     }
 
     // ------------------------------------------------------------------ suggestions

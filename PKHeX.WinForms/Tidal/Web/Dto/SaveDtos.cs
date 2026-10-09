@@ -92,7 +92,7 @@ public sealed record UiSettings
     /// <summary> Look for a new TidalHeX release at startup (Startup.TidalCheckForUpdates). </summary>
     public bool CheckForUpdates { get; init; }
 
-    /// <summary> "light" (Tidal Light, default), "dark" (Tidal Dark), "pss" (Tidal PSS), "za" (Tidal ZA) or "pixel" (Tidal Pixel): Startup.TidalUITheme. </summary>
+    /// <summary> "light" (Tidal Light, default), "dark" (Tidal Dark), "pss" (Tidal PSS), "za" (Tidal ZA), "pixel" (Tidal Pixel) or "arceus" (Tidal Arceus): Startup.TidalUITheme. </summary>
     public string Theme { get; init; } = "light";
     public bool HideSecrets { get; init; }
 

@@ -92,7 +92,7 @@ Responses carry `Cache-Control: max-age=31536000` when the URL has `v`; the UI b
 | `plugins.run` | `{ id }` | `bool` (clicks the plugin's menu entry, then refreshes the slots) |
 | `app.settings` | – | opens the classic settings dialog |
 | `app.setOption` | `{ name: 'encountersInGameOnly' \| 'giftsInGameOnly' \| 'reducedMotion', value: bool }` | `UiSettings`; PKHeX's "filter unavailable species" for the encounter / gift databases, or Startup.TidalReduceMotion (saved on exit) |
-| `app.setTheme` | `{ theme: 'light' \| 'dark' \| 'pss' \| 'za' \| 'pixel' }` | `UiSettings`; Tidal Light / Dark / PSS / ZA / Pixel (Startup.TidalUITheme, saved on exit). The host opens the page with `?theme=` so the first frame uses it |
+| `app.setTheme` | `{ theme: 'light' \| 'dark' \| 'pss' \| 'za' \| 'pixel' \| 'arceus' }` | `UiSettings`; Tidal Light / Dark / PSS / ZA / Pixel / Arceus (Startup.TidalUITheme, saved on exit). The host opens the page with `?theme=` so the first frame uses it |
 | `app.classic` | – | restarts in classic PKHeX mode |
 | `update.check` | – | `UpdateState`: the newest GitHub release (pre-releases included) that has `TidalHeX.exe` attached, compared with this version (`Tidal/TidalVersion.cs`) |
 | `update.install` | – | `bool`; downloads the release from the last check (`updateProgress` events), swaps it in for the running exe (kept as `*.old.exe`, deleted next start) and restarts. Asks first about unsaved changes |
@@ -112,7 +112,7 @@ SaveSummary { loaded, blank, game, icons, version, generation, context, ot, tid,
               boxCount, slotsPerBox, pokemonCount, slotCount, dexCaught, dexTotal, hasParty, hasBox, exportable, edited,
               party: SlotDto[] }
 RecentFile  { path, name, folder, exists }
-UiSettings  { reducedMotion: bool, checkForUpdates: bool, hideSecrets: bool, theme: 'light' | 'dark' | 'pss' | 'za' | 'pixel', encountersInGameOnly: bool, giftsInGameOnly: bool }
+UiSettings  { reducedMotion: bool, checkForUpdates: bool, hideSecrets: bool, theme: 'light' | 'dark' | 'pss' | 'za' | 'pixel' | 'arceus', encountersInGameOnly: bool, giftsInGameOnly: bool }
 BoxData     { box, name, boxCount, wallpaper, slots: SlotDto[] }
 PartyData   { slots: SlotDto[] }
 SlotDto     { box, slot, empty, species, form, name, nickname, level, gender, shiny, egg, legal: bool|null,

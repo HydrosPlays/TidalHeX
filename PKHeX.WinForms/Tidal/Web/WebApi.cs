@@ -443,6 +443,7 @@ internal sealed partial class WebApi
         TidalUITheme.PSS => "pss",
         TidalUITheme.ZA => "za",
         TidalUITheme.Pixel => "pixel",
+        TidalUITheme.Arceus => "arceus",
         _ => "light",
     };
 

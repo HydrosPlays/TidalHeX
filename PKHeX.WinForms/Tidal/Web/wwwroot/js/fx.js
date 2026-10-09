@@ -23,6 +23,8 @@ window.TidalFx = (() => {
   const isZA = () => theme === 'za';
   // Tidal Pixel: a flat scrolling pattern (CSS) and blocky pixel bubbles instead of rings and glows.
   const isPixel = () => theme === 'pixel';
+  // Tidal Arceus: a hazy field (CSS) with far ridge lines and a slowly turning emblem; no particles at all.
+  const isArceus = () => theme === 'arceus';
 
   function mount(container) {
     host = container;
@@ -50,8 +52,8 @@ window.TidalFx = (() => {
     for (const a of running) { try { if (on) a.play(); else a.pause(); } catch { /* */ } }
     host?.classList.toggle('moving', on); // CSS drift of the shine
     if (!bubbles) return;
-    if (on) bubbles.start();
-    else { bubbles.stop(); if (mode === 'page' || reduced) bubbles.clear(); }
+    if (on && !isArceus()) bubbles.start();
+    else { bubbles.stop(); if (mode === 'page' || reduced || isArceus()) bubbles.clear(); }
   }
 
   function clearLoops() {
@@ -73,6 +75,13 @@ window.TidalFx = (() => {
     el('feGaussianBlur', { stdDeviation: '3', result: 'b' }, glow);
     const merge = el('feMerge', {}, glow);
     el('feMergeNode', { in: 'b' }, merge); el('feMergeNode', { in: 'SourceGraphic' }, merge);
+
+    if (isArceus()) {
+      drawRidges(w, h);
+      if (mode !== 'page') drawEmblem(w, h);
+      updateMotion();
+      return;
+    }
 
     if (isZA() || isPixel()) {
       if (isZA()) drawSquares(w, h, mode === 'page' ? 0.6 : 0.45); // home: fainter, the moving squares (canvas) fill in
@@ -122,6 +131,38 @@ window.TidalFx = (() => {
       el('path', { d: `M ${x0 + s * (inset - 18)} ${top + 40} Q ${x0 + s * (inset - bulge - 16)} ${h / 2} ${x0 + s * (inset - 18)} ${bottom - 40}`, fill: 'none', stroke: '#ffffff', 'stroke-width': 1.5, 'stroke-opacity': 0.35 }, g);
     };
     side(false); side(true);
+  }
+
+  /** Tidal Arceus's still layer: two soft ridge lines low on the screen, like hills seen through haze. */
+  function drawRidges(w, h) {
+    const defs = svg.querySelector('defs');
+    const fade = (id, top) => {
+      const g = el('linearGradient', { id, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+      el('stop', { offset: 0, 'stop-color': '#1f2226', 'stop-opacity': top }, g);
+      el('stop', { offset: 1, 'stop-color': '#1f2226', 'stop-opacity': 0 }, g);
+    };
+    fade('arc-far', 0.2); fade('arc-near', 0.32);
+    const g = el('g', { class: 'deco ridges' }, svg);
+    const p = (x, y) => `${(x * w).toFixed(1)} ${(y * h).toFixed(1)}`;
+    el('path', { fill: 'url(#arc-far)', d: `M ${p(0, .64)} Q ${p(.12, .55)} ${p(.24, .6)} T ${p(.46, .57)} T ${p(.7, .61)} T ${p(1, .56)} V ${h} H 0 Z` }, g);
+    el('path', { fill: 'url(#arc-near)', d: `M ${p(0, .78)} Q ${p(.18, .7)} ${p(.34, .75)} T ${p(.62, .72)} T ${p(1, .76)} V ${h} H 0 Z` }, g);
+  }
+
+  /**
+   * Tidal Arceus's emblem on the home and boot screens: a ring with four petals (an original mark). It is its own
+   * layer, turned by the compositor like the ring arcs; sized inline because `.backdrop svg` fills the screen.
+   */
+  function drawEmblem(w, h) {
+    const size = Math.round(Math.min(w, h) * (mode === 'boot' ? 0.62 : 0.8));
+    const cx = w * (mode === 'boot' ? 0.5 : 0.78), cy = h * (mode === 'boot' ? 0.47 : 0.54);
+    const layer = el('svg', { class: 'arc emblem', viewBox: '0 0 100 100' });
+    Object.assign(layer.style, { left: `${Math.round(cx - size / 2)}px`, top: `${Math.round(cy - size / 2)}px`, width: `${size}px`, height: `${size}px`, opacity: 0.075, animationDuration: '420s' });
+    const ink = '#f3ecd1';
+    for (let i = 0; i < 4; i++) el('path', { d: 'M50 43C41 33 41 19 50 7c9 12 9 26 0 36z', fill: ink, transform: `rotate(${i * 90} 50 50)` }, layer);
+    el('circle', { cx: 50, cy: 50, r: 4.5, fill: 'none', stroke: ink, 'stroke-width': 2.5 }, layer);
+    el('circle', { cx: 50, cy: 50, r: 46, fill: 'none', stroke: ink, 'stroke-width': 1.5, 'stroke-dasharray': '60.26 12', 'stroke-dashoffset': 30.13 }, layer);
+    for (const [x, y] of [[82.5, 17.5], [82.5, 82.5], [17.5, 82.5], [17.5, 17.5]]) el('circle', { cx: x, cy: y, r: 2, fill: ink }, layer);
+    host.insertBefore(layer, canvas);
   }
 
   /** Tidal ZA's still layer: hollow and filled squares scattered like the Z-A title screen (same layout every time). */

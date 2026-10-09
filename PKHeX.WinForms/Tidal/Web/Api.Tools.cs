@@ -653,7 +653,7 @@ internal sealed partial class WebApi
         return GetUiSettings();
     }
 
-    /// <summary> Settings → Theme: "light" (Tidal Light), "dark" (Tidal Dark), "pss" (Tidal PSS), "za" (Tidal ZA) or "pixel" (Tidal Pixel), saved on exit. </summary>
+    /// <summary> Settings → Theme: "light" (Tidal Light), "dark" (Tidal Dark), "pss" (Tidal PSS), "za" (Tidal ZA), "pixel" (Tidal Pixel) or "arceus" (Tidal Arceus), saved on exit. </summary>
     private UiSettings SetTheme(string theme)
     {
         Settings.Startup.TidalUITheme = theme switch
@@ -663,6 +663,7 @@ internal sealed partial class WebApi
             "pss" => TidalUITheme.PSS,
             "za" => TidalUITheme.ZA,
             "pixel" => TidalUITheme.Pixel,
+            "arceus" => TidalUITheme.Arceus,
             _ => throw new ArgumentException($"Unknown theme '{theme}'."),
         };
         return GetUiSettings();

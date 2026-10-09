@@ -6,7 +6,7 @@ window.TidalPages.settings = {
     this.store.hints = [];
     window.TidalFx.enter(this.$el.querySelectorAll('.set-row'), { stagger: 50, y: 12 });
   },
-  data: () => ({ themes: [{ id: 'light', name: 'Tidal Light (Default)' }, { id: 'dark', name: 'Tidal Dark' }, { id: 'pss', name: 'Tidal PSS' }, { id: 'za', name: 'Tidal ZA' }, { id: 'pixel', name: 'Tidal Pixel' }], checking: false }),
+  data: () => ({ themes: [{ id: 'light', name: 'Tidal Light (Default)' }, { id: 'dark', name: 'Tidal Dark' }, { id: 'pss', name: 'Tidal PSS' }, { id: 'za', name: 'Tidal ZA' }, { id: 'pixel', name: 'Tidal Pixel' }, { id: 'arceus', name: 'Tidal Arceus' }], checking: false }),
   methods: {
     async check() {
       this.checking = true;

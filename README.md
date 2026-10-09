@@ -17,7 +17,7 @@
 
 TidalHeX is a fork of PKHeX that replaces the classic Windows Forms window with a new animated interface, styled after a game console's home menu and the Rotom Dex. Underneath, it is still PKHeX: saves are read and written by PKHeX's own engine (`PKHeX.Core`, unchanged), with the same legality checker and the same encounter and Mystery Gift data. TidalHeX edits your saves exactly the way PKHeX does.
 
-A built-in **Save Manager** lists every save you keep in the `saves` folder next to the exe, raw files or `.zip` backups, with each game's box art, so switching games is a double-click. Five themes change the whole look, from the default ocean blue to a Game Boy Advance–style pixel menu. PKHeX plugins work too: drop them in the `plugins` folder and their commands appear under Save Tools. The classic PKHeX window is still one click away for anything the new interface doesn't cover yet.
+A built-in **Save Manager** lists every save you keep in the `saves` folder next to the exe, raw files or `.zip` backups, with each game's box art, so switching games is a double-click. Six themes change the whole look, from the default ocean blue to a Game Boy Advance–style pixel menu and the ink-and-parchment menus of Legends: Arceus. PKHeX plugins work too: drop them in the `plugins` folder and their commands appear under Save Tools. The classic PKHeX window is still one click away for anything the new interface doesn't cover yet.
 
 **We do not support or condone cheating at the expense of others. Do not use significantly hacked Pokémon in battle or in trades with those who are unaware hacked Pokémon are in use.**
 
@@ -54,7 +54,7 @@ The classic PKHeX window is still there, restyled with the TidalHeX ocean theme.
 - **Forms**: the form picker shows each form's sprite, gender forms (Meowstic, Indeedee and others) stay in step with the gender, and Gen 3 Deoxys explains that its forme comes from the game it's in.
 - **In-app messages**: PKHeX's questions and errors appear inside the interface instead of Windows message boxes.
 - **Keyboard friendly**: Q/E switch pages (the L/R buttons), Esc goes back, Ctrl+1–6 jump to a page, Ctrl+O opens a file and Ctrl+E exports the save. Each screen lists its actions along the bottom.
-- **Themes**: Tidal Light, Tidal Dark, Tidal PSS, Tidal ZA and Tidal Pixel (see [Themes](#themes)).
+- **Themes**: Tidal Light, Tidal Dark, Tidal PSS, Tidal ZA, Tidal Pixel and Tidal Arceus (see [Themes](#themes)).
 - **Updates**: at startup TidalHeX checks this repository's releases. When a newer version is out it shows the release notes, and **Update now** downloads it, swaps it in and restarts. Turn the check off or run it by hand in Settings → Updates.
 - **Light on your PC**: the background animation only runs on the home screen while the window is focused, and pauses when minimized. A "Reduce motion" setting turns it off entirely.
 
@@ -132,7 +132,7 @@ Later games work the same way with their English names (`gold`, `silver`, `cryst
 
 ### Themes
 
-TidalHeX comes with five themes. They change the colors, panels, backgrounds and animations of the whole interface; everything works the same in each.
+TidalHeX comes with six themes. They change the colors, panels, backgrounds and animations of the whole interface; everything works the same in each.
 
 **How to change the theme**
 
@@ -192,6 +192,16 @@ Based on the Game Boy and Game Boy Advance games (Gold/Silver, Ruby/Sapphire/Eme
 | ![Home](.github/screenshots/themes/pixel-home.webp) | ![Boxes](.github/screenshots/themes/pixel-boxes.webp) |
 | **Pokémon editor** | **Save Manager** |
 | ![Pokémon editor](.github/screenshots/themes/pixel-editor.webp) | ![Save Manager](.github/screenshots/themes/pixel-saves.webp) |
+
+#### Tidal Arceus
+
+Based on Pokémon Legends: Arceus. The background is a hazy grey field with distant ridge lines, and on the home screen a band of mist drifts past a slowly turning emblem. The page tabs hang from the top as a cream strip, with a navy pennant for the page you are on. Pokémon sit in round dark slots and rows are drawn as ink strokes. The item you point at turns cream with a yellow double chevron, like the game's cursor, while a choice you have made (a filter, the open pouch, the chosen theme) is shown in blue. Save Tools, the Save Manager and Settings are parchment sheets, like the game's mission log. The lettering is Candara, a font that comes with Windows.
+
+| Home | Boxes |
+|:---:|:---:|
+| ![Home](.github/screenshots/themes/arceus-home.webp) | ![Boxes](.github/screenshots/themes/arceus-boxes.webp) |
+| **Pokémon editor** | **Save Manager** |
+| ![Pokémon editor](.github/screenshots/themes/arceus-editor.webp) | ![Save Manager](.github/screenshots/themes/arceus-saves.webp) |
 
 ### Classic mode
 

@@ -75,14 +75,14 @@
       fx.setReduced(s.reducedMotion);
       this.applyTheme(s.theme);
     },
-    /** Tidal Light / Dark / PSS / ZA / Pixel: the page switches right away, PKHeX keeps the choice. */
+    /** Tidal Light / Dark / PSS / ZA / Pixel / Arceus: the page switches right away, PKHeX keeps the choice. */
     async setTheme(theme) {
       this.applyTheme(theme);
       const s = await this.call('app.setTheme', { theme }).catch(() => null);
       if (s) this.settings = s;
     },
     applyTheme(theme) {
-      this.settings.theme = ['dark', 'pss', 'za', 'pixel'].includes(theme) ? theme : 'light';
+      this.settings.theme = ['dark', 'pss', 'za', 'pixel', 'arceus'].includes(theme) ? theme : 'light';
       if (this.settings.theme === 'light') delete document.documentElement.dataset.theme;
       else document.documentElement.dataset.theme = this.settings.theme;
       fx.setTheme(this.settings.theme); // the backdrop's decorations and particles differ per theme
@@ -130,7 +130,11 @@
 
   // Host events
   const T = window.Tidal;
-  T.on('saveLoaded', s => { store.saveEpoch++; store.leaveGuard = null; store.save = s; store.lists = {}; store.box = 0; store.bumpSprites(); store.toast(`Loaded ${s.game}`, 'success'); });
+  T.on('saveLoaded', s => {
+    store.saveEpoch++; store.leaveGuard = null; store.save = s; store.lists = {}; store.box = 0; store.bumpSprites(); store.toast(`Loaded ${s.game}`, 'success');
+    // The editor now holds the new save's blank Pokémon: don't keep showing the one from the previous save (home tile, editor page).
+    store.call('editor.get').then(e => { store.editor = e; }).catch(() => {});
+  });
   T.on('saveChanged', s => { store.save = s; store.bumpSprites(); });
   T.on('boxChanged', () => store.bumpSprites());
   T.on('editorLoaded', e => { store.editor = e; store.go('editor'); });

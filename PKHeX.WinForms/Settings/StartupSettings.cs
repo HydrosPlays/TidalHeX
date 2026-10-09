@@ -28,7 +28,7 @@ public sealed class StartupSettings : IStartupSettings
     [LocalizedDescription("A TidalHeX release the user chose to skip (no reminder until a newer one comes out).")]
     public string TidalSkippedUpdate { get; set; } = string.Empty;
 
-    [LocalizedDescription("Color theme of the TidalHeX web interface: Tidal Light (the default), Tidal Dark, Tidal PSS, Tidal ZA or Tidal Pixel.")]
+    [LocalizedDescription("Color theme of the TidalHeX web interface: Tidal Light (the default), Tidal Dark, Tidal PSS, Tidal ZA, Tidal Pixel or Tidal Arceus.")]
     public TidalUITheme TidalUITheme { get; set; } = TidalUITheme.Light;
 
     [LocalizedDescription("Turn off the bubbles and animations in the TidalHeX web interface.")]
@@ -134,4 +134,7 @@ public enum TidalUITheme
 
     /// <summary> Tidal Pixel: the Game Boy / Game Boy Advance games' pixel menus, with its own pixel font. </summary>
     Pixel,
+
+    /// <summary> Tidal Arceus: Pokémon Legends: Arceus's menus (ink strokes, round slots, a cream tab strip, parchment lists). </summary>
+    Arceus, // saved as a number: new themes go at the end
 }
