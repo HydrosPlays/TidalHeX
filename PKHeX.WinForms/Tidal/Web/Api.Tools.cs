@@ -153,6 +153,8 @@ internal sealed partial class WebApi
             s => s is SAV5, () => ShowDialog(new SAV_UnityTower((SAV5)SAV))),
         new("OpenJoinAvenueEditor", "B_OpenJoinAvenueEditor", "Join Avenue", CatWorld, "Edit Join Avenue shops, rank and visitors.",
             s => s is SAV5B2W2, () => ShowDialog(new SAV_JoinAvenue((SAV5B2W2)SAV))),
+        new("OpenSafariZone", "B_OpenSafariZone", "Safari Zone", CatWorld, "Arrange the Safari Zone's areas and placed objects.",
+            s => s is SAV4HGSS, () => ShowDialog(new SAV_Safari4((SAV4HGSS)SAV))),
         new("OpenPokeathlon", "B_OpenPokeathlon", "Pokéathlon", CatBattle, "Edit Pokéathlon records and points.",
             s => s is SAV4HGSS, () => ShowDialog(new SAV_Pokeathlon4((SAV4HGSS)SAV))),
         new("OpenMedalsEditor", "B_OpenMedalsEditor", "Medals", CatTrainer, "Edit Medal Rally medals.",
