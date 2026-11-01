@@ -490,7 +490,7 @@ public partial class SAV_Trainer7 : Form
     {
         SAV.BoxLayout.UnlockAllTeams();
         B_UnlockBattleTeams.Enabled = false;
-        Application.OpenForms.OfType<Main>().First().ReloadSlots();
+        Application.OpenForms.OfType<Main>().FirstOrDefault()?.ReloadSlots(); // no Main in TidalHeX, which refreshes when this closes
         WinFormsUtil.Asterisk();
     }
 

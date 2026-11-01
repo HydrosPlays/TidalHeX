@@ -310,7 +310,7 @@ public partial class SAV_Trainer : Form
         if (SAV is ISaveBlock6Main main)
             main.BattleBox.Locked = false;
         B_UnlockBattleBox.Enabled = false;
-        Application.OpenForms.OfType<Main>().First().ReloadSlots();
+        Application.OpenForms.OfType<Main>().FirstOrDefault()?.ReloadSlots(); // no Main in TidalHeX, which refreshes when this closes
         WinFormsUtil.Asterisk();
     }
 
