@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
@@ -49,6 +50,16 @@ internal static class Program
         }
         if (Settings.Startup.HighDpiText)
             Application.SetHighDpiMode(HighDpiMode.DpiUnawareGdiScaled);
+
+        EnforceCulture();
+    }
+
+    private static void EnforceCulture()
+    {
+        // Use a Gregorian calendar regardless of user locale; save data supports dates through 2099.
+        // Avoid locale-specific calendar limitations (e.g. Um Al-Qura ending in 2077).
+        if (CultureInfo.CurrentCulture.DateTimeFormat.Calendar is not GregorianCalendar)
+            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
     }
 
     [STAThread]
